@@ -41,7 +41,7 @@ const approveLoan = async (req, res) => {
         if (!loan) {
             return res.status(404).json({ message: 'Loan not found' });
         }
-        loan.status = 'Approved';
+        loan.status = 'approved';
         await loan.save();
         res.json({ message: 'Loan approved successfully', loan });
     } catch (error) {
@@ -57,7 +57,7 @@ const rejectLoan = async (req, res) => {
         if (!loan) {
             return res.status(404).json({ message: 'Loan not found' });
         }
-        loan.status = 'Rejected';
+        loan.status = 'rejected';
         await loan.save();
         res.json({ message: 'Loan rejected successfully', loan });
     } catch (error) {
@@ -75,7 +75,7 @@ const repayLoan = async (req, res) => {
             return res.status(404).json({ message: 'Loan not found' });
         }
 
-        if (loan.status !== 'Approved') { 
+        if (loan.status !== 'approved') {
             return res.status(400).json({ message: 'Only approved loans can be repaid' });
         }
         // update repayment amount
