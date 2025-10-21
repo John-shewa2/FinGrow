@@ -34,7 +34,75 @@ const getAllLoans = async (req, res) => {
     }
 };
 
+// Approve a loan request
+const approveLoan = async (req, res) => {
+    try {
+        const loan = await Loan.findById(req.params.id);
+        if (!loan) {
+            return res.status(404).json({ message: 'Loan not found' });
+        }
+        loan.status = 'Approved';
+        await loan.save();
+        res.json({ message: 'Loan approved successfully', loan });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Reject a loan request
+const rejectLoan = async (req, res) => {
+    try {
+        const loan = await Loan.findById(req.params.id);
+        if (!loan) {
+            return res.status(404).json({ message: 'Loan not found' });
+        }
+        loan.status = 'Rejected';
+        await loan.save();
+        res.json({ message: 'Loan rejected successfully', loan });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Repay loan
+const repayLoan = async (req, res) => {
+    try {
+        const { amount } = req.body;
+        const loan = await Loan.findById(req.params.id);
+        if (!loan) {
+            return res.status(404).json({ message: 'Loan not found' });
+        }
+
+        if (loan.status !== 'Approved') { 
+            return res.status(400).json({ message: 'Only approved loans can be repaid' });
+        }
+        // update repayment amount
+        loan.repaymentAmount += amount;
+
+        // if fully paid, mark as paid
+        const totalDue = loan.amount + (loan.amount * loan.interestRate / 100);
+        if (loan.repaymentAmount >= totalDue) {
+            loan.status = 'Paid';
+            loan.repaymentAmount = totalDue; // cap repayment to total due
+        }
+
+        await loan.save();
+        res.json({ message: 'Loan repayment successful', loan });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+
+
 module.exports = {
     createLoan,
     getAllLoans,
+    approveLoan,
+    rejectLoan,
+    repayLoan
 };
