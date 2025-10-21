@@ -31,6 +31,10 @@ app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
-// routes
+// user routes
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
+
+// loan routes
+const loanRoutes = require('./routes/loanRoutes');
+app.use('/api/loans', loanRoutes);
