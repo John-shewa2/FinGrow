@@ -12,7 +12,7 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // create new user
+        // Create new user
         const user = new User({ name, email, password, role });
         await user.save();
 
@@ -30,23 +30,26 @@ const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        // Check if user exists
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: 'Invalid email or password' });
         }
 
+        // Verify password
         const isMatch = await user.matchPassword(password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid email or password' });
         }   
 
-// Generate JWT
+        // Generate JWT
         const token = jwt.sign(
             { id: user._id, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
+        // Send user info and token
         res.json({
             message: 'Login successful',
             user: {
