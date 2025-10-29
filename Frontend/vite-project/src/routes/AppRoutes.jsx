@@ -1,18 +1,23 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useContext } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-import Dashboard from "../pages/Dashboard";
 import Loans from "../pages/Loans";
+import { AuthContext } from "../context/AuthContext";
 
 export default function AppRoutes() {
+  const { user } = useContext(AuthContext);
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route 
+          path="/" 
+          element={user ? <Navigate to="/loans" /> : <Navigate to="/login" />} 
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/loans" element={<Loans />} />
+        <Route path="/loans" element={user ? <Loans /> : <Navigate to="/login" />} />
       </Routes>
     </Router>
   );

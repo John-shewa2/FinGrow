@@ -34,6 +34,17 @@ const getAllLoans = async (req, res) => {
     }
 };
 
+// Get loans for the logged-in borrower
+const getMyLoans = async (req, res) => {
+  try {
+    const loans = await Loan.find({ borrower: req.user._id });
+    res.json(loans);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // Approve loan request (admin)
 const approveLoan = async (req, res) => {
     try {
@@ -126,5 +137,6 @@ module.exports = {
     approveLoan,
     rejectLoan,
     requestRepayment,
-    approveRepayment
+    approveRepayment,
+    getMyLoans,
 };
