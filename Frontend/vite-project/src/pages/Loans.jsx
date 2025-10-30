@@ -11,14 +11,26 @@ export default function Loans() {
   const [interestRate, setInterestRate] = useState(7);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showLoans, setShowLoans] = useState(true); // <-- added
 
   const fetchLoans = async () => {
     try {
       const res = await api.get("/loans", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Filter loans by borrower if user is not admin
-      setLoans(user.role === "admin" ? res.data : res.data.filter(l => l.borrower._id === user.id));
+      console.log("GET /loans response:", res.data); // <-- debug to inspect payload/shape
+      // Filter loans by borrower if user is not admin (robust id handling)
+      if (user.role === "admin") {
+        setLoans(res.data);
+      } else {
+        setLoans(
+          res.data.filter((l) => {
+            const borrowerId = l.borrower?._id || l.borrower;
+            const userId = user._id || user.id;
+            return String(borrowerId) === String(userId);
+          })
+        );
+      }
     } catch (err) {
       console.error(err);
     }
@@ -27,6 +39,11 @@ export default function Loans() {
   useEffect(() => {
     if (token) fetchLoans();
   }, [token]);
+  // helper to show loans and refresh
+  const handleShowLoans = async () => {
+    setShowLoans(true);
+    await fetchLoans();
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,7 +68,7 @@ export default function Loans() {
   if (user.role === "admin") {
     return <AdminDashboard />;
   }
-  
+
   return (
     <div className="min-h-screen p-8 bg-gray-100">
       <header className="flex items-center justify-between mb-6">
@@ -62,7 +79,7 @@ export default function Loans() {
           {user.role === "borrower" && (
             <button
               className="mr-4 text-blue-600"
-              onClick={fetchLoans}
+              onClick={handleShowLoans}
             >
               My Loans
             </button>

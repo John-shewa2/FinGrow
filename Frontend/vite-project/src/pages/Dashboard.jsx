@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 export default function Dashboard() {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, loading } = useContext(AuthContext);
 
   // Redirect to login if not logged in
   if (loading) return <p>Loading...</p>; // <-- wait for auth state
