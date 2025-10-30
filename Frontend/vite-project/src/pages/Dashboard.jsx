@@ -6,9 +6,8 @@ export default function Dashboard() {
   const { user, logout } = useContext(AuthContext);
 
   // Redirect to login if not logged in
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
+  if (loading) return <p>Loading...</p>; // <-- wait for auth state
+  if (!user) return <Navigate to="/login" />; // <-- redirect only if not logged in
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">

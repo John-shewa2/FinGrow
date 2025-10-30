@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import api from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
+import AdminDashboard from "./AdminDashboard";
 
 export default function Loans() {
   const { token, user, logout } = useContext(AuthContext);
@@ -10,25 +11,22 @@ export default function Loans() {
   const [interestRate, setInterestRate] = useState(7);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [showLoans, setShowLoans] = useState(false);
 
   const fetchLoans = async () => {
     try {
-      const url = user.role === "admin" ? "/loans" : "/loans/my";
-      const res = await api.get(url, {
+      const res = await api.get("/loans", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setLoans(res.data);
-      setShowLoans(true);
+      // Filter loans by borrower if user is not admin
+      setLoans(user.role === "admin" ? res.data : res.data.filter(l => l.borrower._id === user.id));
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch loans");
     }
   };
 
   useEffect(() => {
-    if (token && user.role === "admin") fetchLoans();
-  }, [token, user]);
+    if (token) fetchLoans();
+  }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,20 +34,24 @@ export default function Loans() {
     setSuccess("");
 
     try {
-      const res = await api.post(
+      await api.post(
         "/loans",
-        { borrower: user.id, amount, termMonths },
+        { amount, termMonths },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setSuccess("Loan request submitted!");
       setAmount("");
       setTermMonths("");
-      fetchLoans(); // refresh loan list
+      fetchLoans();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create loan");
     }
   };
-
+  // Admin view
+  if (user.role === "admin") {
+    return <AdminDashboard />;
+  }
+  
   return (
     <div className="min-h-screen p-8 bg-gray-100">
       <header className="flex items-center justify-between mb-6">
