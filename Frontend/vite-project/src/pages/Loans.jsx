@@ -11,7 +11,7 @@ export default function Loans() {
   const [interestRate, setInterestRate] = useState(7);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [showLoans, setShowLoans] = useState(true); // <-- added
+  const [showLoans, setShowLoans] = useState(false); // hide until "My Loans" clicked
 
   const fetchLoans = async () => {
     try {
@@ -73,7 +73,7 @@ export default function Loans() {
     <div className="min-h-screen p-8 bg-gray-100">
       <header className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">
-          Hello, {user.name} ({user.role})
+          Hello, {user.name}
         </h1>
         <nav>
           {user.role === "borrower" && (
