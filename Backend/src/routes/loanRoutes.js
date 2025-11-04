@@ -25,7 +25,9 @@ router.route('/myloans').get(protect, getMyLoans);
 router.route('/:id').get(protect, getLoanById);
 
 // PUT /api/loans/:id/status (Admin: Approve/Reject a loan)
-router.route('/:id/status').put(protect, admin, updateLoanStatus);
+router.route('/:id/status')
+  .put(protect, admin, updateLoanStatus)
+  .patch(protect, admin, updateLoanStatus);
 
 module.exports = router;
 

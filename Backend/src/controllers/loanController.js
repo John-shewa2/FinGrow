@@ -1,29 +1,33 @@
-import Loan from '../models/Loan.js';
-import User from '../models/user.js';
-import asyncHandler from 'express-async-handler';
+const Loan = require('../models/Loan');
+const User = require('../models/user');
+const asyncHandler = require('express-async-handler');
 
 // Helper function to calculate repayment schedule
-const calculateRepaymentSchedule = (amount, term) => {
+const calculateRepaymentSchedule = (amount, termMonths) => {
   const schedule = [];
-  // Simple interest calculation for this example
-  // A real app would use a more complex amortization formula
-  const interestRate = 0.05; // 5% annual interest
+  const interestRate = 0.05; // annual
   const monthlyInterest = (amount * interestRate) / 12;
-  const monthlyPrincipal = amount / term;
+  const monthlyPrincipal = amount / termMonths;
   const monthlyPayment = monthlyPrincipal + monthlyInterest;
-  let remainingBalance = amount;
 
-  for (let i = 1; i <= term; i++) {
-    remainingBalance -= monthlyPrincipal;
+  const addMonths = (date, months) => {
+    const d = new Date(date);
+    d.setMonth(d.getMonth() + months);
+    return d;
+  };
+
+  for (let i = 1; i <= termMonths; i++) {
+    const dueDate = addMonths(new Date(), i); // approx monthly due date
     schedule.push({
-      month: i,
-      paymentDate: new Date(Date.now() + i * 30 * 24 * 60 * 60 * 1000), // Approx.
-      monthlyPayment: monthlyPayment.toFixed(2),
-      principal: monthlyPrincipal.toFixed(2),
-      interest: monthlyInterest.toFixed(2),
-      remainingBalance: remainingBalance > 0 ? remainingBalance.toFixed(2) : 0,
+      amount: parseFloat(monthlyPrincipal.toFixed(2)),   // principal portion
+      installment: parseFloat(monthlyPayment.toFixed(2)),// total monthly payment
+      dueDate,                                           // Date object
+      // optional extra fields (not required by schema)
+      interest: parseFloat(monthlyInterest.toFixed(2)),
+      remainingBalance: parseFloat(Math.max(amount - monthlyPrincipal * i, 0).toFixed(2)),
     });
   }
+
   return schedule;
 };
 
@@ -31,22 +35,44 @@ const calculateRepaymentSchedule = (amount, term) => {
 // @route   POST /api/loans
 // @access  Private (Borrower)
 const createLoan = asyncHandler(async (req, res) => {
-  const { amount, term } = req.body;
+  try {
+    console.log('createLoan called - body:', req.body);
+    console.log('createLoan - req.user:', req.user && { id: req.user._id, role: req.user.role });
 
-  if (!amount || !term) {
-    res.status(400);
-    throw new Error('Please provide an amount and a term');
+    if (!req.user) {
+      res.status(401);
+      throw new Error('Not authorized, no user information');
+    }
+
+    const { amount } = req.body;
+    // accept multiple possible names from frontend and normalize to termMonths
+    let termMonths = req.body.termMonths ?? req.body.term ?? req.body.duration;
+
+    if (amount == null || termMonths == null) {
+      res.status(400);
+      throw new Error('Please provide an amount and a term (termMonths)');
+    }
+
+    termMonths = parseInt(termMonths, 10);
+    if (isNaN(termMonths) || termMonths <= 0) {
+      res.status(400);
+      throw new Error('Invalid term (termMonths) value');
+    }
+
+    const loan = new Loan({
+      borrower: req.user._id,
+      amount,
+      termMonths, // match required schema field
+      status: 'pending',
+    });
+
+    const createdLoan = await loan.save();
+    res.status(201).json(createdLoan);
+  } catch (err) {
+    console.error('createLoan error:', err.stack || err);
+    const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+    res.status(statusCode).json({ message: err.message || 'Server error' });
   }
-
-  const loan = new Loan({
-    borrower: req.user._id, // Get user from protect middleware
-    amount,
-    term,
-    status: 'pending', // Default status
-  });
-
-  const createdLoan = await loan.save();
-  res.status(201).json(createdLoan);
 });
 
 // @desc    Get logged in user's loans
@@ -101,36 +127,46 @@ const getLoanById = asyncHandler(async (req, res) => {
 // @route   PUT /api/loans/:id/status
 // @access  Private (Admin)
 const updateLoanStatus = asyncHandler(async (req, res) => {
-  const { status } = req.body; // Expecting { status: 'approved' } or { status: 'rejected' }
+  try {
+    console.log('updateLoanStatus called - id:', req.params.id, 'body:', req.body, 'user:', req.user && { id: req.user._id, role: req.user.role });
 
-  if (!status || (status !== 'approved' && status !== 'rejected')) {
-    res.status(400);
-    throw new Error('Invalid status');
-  }
+    const { status } = req.body; // Expecting { status: 'approved' } or { status: 'rejected' }
 
-  const loan = await Loan.findById(req.params.id);
+    if (!status || (status !== 'approved' && status !== 'rejected')) {
+      res.status(400);
+      throw new Error('Invalid status');
+    }
 
-  if (loan) {
+    // validate ObjectId format early
+    const id = req.params.id;
+    if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) {
+      res.status(400);
+      throw new Error('Invalid loan id');
+    }
+
+    const loan = await Loan.findById(id);
+
+    if (!loan) {
+      res.status(404);
+      throw new Error('Loan not found');
+    }
+
     loan.status = status;
 
-    // If approving, calculate and save the repayment schedule
     if (status === 'approved') {
-      loan.repaymentSchedule = calculateRepaymentSchedule(
-        loan.amount,
-        loan.term
-      );
+      loan.repaymentSchedule = calculateRepaymentSchedule(loan.amount, loan.termMonths ?? loan.term);
     }
 
     const updatedLoan = await loan.save();
     res.json(updatedLoan);
-  } else {
-    res.status(404);
-    throw new Error('Loan not found');
+  } catch (err) {
+    console.error('updateLoanStatus error:', err.stack || err);
+    const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+    res.status(statusCode).json({ message: err.message || 'Server error' });
   }
 });
 
-// This is the most important part - exporting all functions as named exports
-export {
+module.exports = {
   createLoan,
   getMyLoans,
   getAllLoans,

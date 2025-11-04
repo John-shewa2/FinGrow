@@ -12,13 +12,13 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
           <div className="flex-shrink-0">
-            <Link to="/" className="text-2xl font-bold text-blue-600">
-              LoanApp
+            <Link to="/" className="text-2xl font-bold text-white">
+              FinGrow
             </Link>
           </div>
 
@@ -30,14 +30,14 @@ const Navbar = () => {
                 {user?.role === 'admin' ? (
                   <Link
                     to="/admin"
-                    className="text-gray-600 hover:text-blue-600 font-medium transition duration-150"
+                    className="text-white hover:text-gray-100 font-medium transition duration-150"
                   >
                     Admin Dashboard
                   </Link>
                 ) : (
                   <Link
                     to="/dashboard"
-                    className="text-gray-600 hover:text-blue-600 font-medium transition duration-150"
+                    className="text-white hover:text-gray-100 font-medium transition duration-150"
                   >
                     My Dashboard
                   </Link>
@@ -46,7 +46,7 @@ const Navbar = () => {
                 {/* Logout Button */}
                 <button
                   onClick={handleLogout}
-                  className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition duration-150"
+                  className="bg-white text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition duration-150"
                 >
                   Logout
                 </button>
@@ -56,13 +56,13 @@ const Navbar = () => {
                 {/* Links for logged-out users */}
                 <Link
                   to="/login"
-                  className="text-gray-600 hover:text-blue-600 font-medium transition duration-150"
+                  className="text-white hover:text-gray-100 font-medium transition duration-150"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-150"
+                  className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition duration-150"
                 >
                   Register
                 </Link>
@@ -80,5 +80,4 @@ const Navbar = () => {
   );
 };
 
-// This is the important part that fixes your error
 export default Navbar;

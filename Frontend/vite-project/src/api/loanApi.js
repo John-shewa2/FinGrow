@@ -16,6 +16,7 @@ export const getAllLoans = (status = '') => {
   return api.get(`/loans?status=${status}`);
 };
 
+// changed: use PUT to match backend route
 export const updateLoanStatus = (id, status) => {
-  return api.patch(`/loans/${id}/status`, { status });
+  return api.put(`/loans/${id}/status`, { status });
 };

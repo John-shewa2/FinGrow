@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import LoanRequestForm from '../components/LoanRequestForm'; 
 import MyLoans from '../components/MyLoans'; 
+import AuthContext from '../context/AuthContext';
+
 const Dashboard = () => {
   // State to manage which view is active: 'myLoans' or 'requestLoan'
   const [activeView, setActiveView] = useState('myLoans');
+
+  const { user } = useContext(AuthContext);
+  const firstName =
+    user?.name?.split(' ')[0] || user?.username || 'User';
 
   const getButtonClasses = (viewName) => {
     return activeView === viewName
@@ -17,10 +23,10 @@ const Dashboard = () => {
         {/* Header */}
         <div className="bg-white p-6 rounded-lg shadow-md mb-6">
           <h1 className="text-3xl font-bold text-gray-800">
-            Borrower Dashboard
+            Welcome {firstName}
           </h1>
           <p className="text-gray-600 mt-2">
-            Welcome! Manage your loans or request a new one.
+            Borrower Dashboard — manage your loans or request a new one.
           </p>
         </div>
 
