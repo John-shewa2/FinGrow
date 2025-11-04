@@ -33,8 +33,7 @@ app.listen(PORT, () => {
 
 // user routes
 const userRoutes = require('./routes/userRoutes');
-app.use('/api/users', userRoutes);
-
-// loan routes
 const loanRoutes = require('./routes/loanRoutes');
-app.use('/api/loans', loanRoutes);
+
+app.use('/api/users', userRoutes.default || userRoutes);
+app.use('/api/loans', loanRoutes.default || loanRoutes);

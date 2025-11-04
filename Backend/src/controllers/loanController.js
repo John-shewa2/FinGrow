@@ -1,142 +1,140 @@
-const Loan = require('../models/Loan');
+import Loan from '../models/Loan.js';
+import User from '../models/user.js';
+import asyncHandler from 'express-async-handler';
 
-// Create a new loan request (borrower)
-const createLoan = async (req, res) => {
-    try {
-        const { amount, interestRate, termMonths } = req.body;
+// Helper function to calculate repayment schedule
+const calculateRepaymentSchedule = (amount, term) => {
+  const schedule = [];
+  // Simple interest calculation for this example
+  // A real app would use a more complex amortization formula
+  const interestRate = 0.05; // 5% annual interest
+  const monthlyInterest = (amount * interestRate) / 12;
+  const monthlyPrincipal = amount / term;
+  const monthlyPayment = monthlyPrincipal + monthlyInterest;
+  let remainingBalance = amount;
 
-        const loan = new Loan({
-            borrower: req.user._id,
-            amount,
-            interestRate,
-            termMonths
-        });
-        await loan.save();
-
-        res.status(201).json({
-            message: 'Loan request created successfully',
-            loan
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
-// Get all loans (admin)
-const getAllLoans = async (req, res) => {
-    try {
-        const loans = await Loan.find().populate('borrower', 'name email role');
-        res.json(loans);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
-// Get loans for the logged-in borrower
-const getMyLoans = async (req, res) => {
-  try {
-    const loans = await Loan.find({ borrower: req.user._id });
-    res.json(loans);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+  for (let i = 1; i <= term; i++) {
+    remainingBalance -= monthlyPrincipal;
+    schedule.push({
+      month: i,
+      paymentDate: new Date(Date.now() + i * 30 * 24 * 60 * 60 * 1000), // Approx.
+      monthlyPayment: monthlyPayment.toFixed(2),
+      principal: monthlyPrincipal.toFixed(2),
+      interest: monthlyInterest.toFixed(2),
+      remainingBalance: remainingBalance > 0 ? remainingBalance.toFixed(2) : 0,
+    });
   }
+  return schedule;
 };
 
-// Approve loan request (admin)
-const approveLoan = async (req, res) => {
-    try {
-        const loan = await Loan.findById(req.params.id);
-        if (!loan) return res.status(404).json({ message: 'Loan not found' });
+// @desc    Create new loan
+// @route   POST /api/loans
+// @access  Private (Borrower)
+const createLoan = asyncHandler(async (req, res) => {
+  const { amount, term } = req.body;
 
-        loan.status = 'approved';
-        await loan.save();
+  if (!amount || !term) {
+    res.status(400);
+    throw new Error('Please provide an amount and a term');
+  }
 
-        res.json({ message: 'Loan approved successfully', loan });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+  const loan = new Loan({
+    borrower: req.user._id, // Get user from protect middleware
+    amount,
+    term,
+    status: 'pending', // Default status
+  });
+
+  const createdLoan = await loan.save();
+  res.status(201).json(createdLoan);
+});
+
+// @desc    Get logged in user's loans
+// @route   GET /api/loans/myloans
+// @access  Private (Borrower)
+const getMyLoans = asyncHandler(async (req, res) => {
+  const loans = await Loan.find({ borrower: req.user._id });
+  res.json(loans);
+});
+
+// @desc    Get all loans (for admin)
+// @route   GET /api/loans
+// @access  Private (Admin)
+const getAllLoans = asyncHandler(async (req, res) => {
+  const status = req.query.status
+    ? {
+        status: req.query.status, // Filter by status (pending, approved, rejected)
+      }
+    : {}; // No filter, get all
+
+  const loans = await Loan.find({ ...status }).populate('borrower', 'username email');
+  res.json(loans);
+});
+
+// @desc    Get loan by ID
+// @route   GET /api/loans/:id
+// @access  Private (Borrower or Admin)
+const getLoanById = asyncHandler(async (req, res) => {
+  const loan = await Loan.findById(req.params.id).populate(
+    'borrower',
+    'username email'
+  );
+
+  if (loan) {
+    // Check if user is the borrower OR an admin
+    if (
+      loan.borrower._id.toString() === req.user._id.toString() ||
+      req.user.role === 'admin'
+    ) {
+      res.json(loan);
+    } else {
+      res.status(401);
+      throw new Error('Not authorized to view this loan');
     }
-};
+  } else {
+    res.status(404);
+    throw new Error('Loan not found');
+  }
+});
 
-// Reject loan request (admin)
-const rejectLoan = async (req, res) => {
-    try {
-        const loan = await Loan.findById(req.params.id);
-        if (!loan) return res.status(404).json({ message: 'Loan not found' });
+// @desc    Update loan status (approve/reject)
+// @route   PUT /api/loans/:id/status
+// @access  Private (Admin)
+const updateLoanStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body; // Expecting { status: 'approved' } or { status: 'rejected' }
 
-        loan.status = 'rejected';
-        await loan.save();
+  if (!status || (status !== 'approved' && status !== 'rejected')) {
+    res.status(400);
+    throw new Error('Invalid status');
+  }
 
-        res.json({ message: 'Loan rejected successfully', loan });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+  const loan = await Loan.findById(req.params.id);
+
+  if (loan) {
+    loan.status = status;
+
+    // If approving, calculate and save the repayment schedule
+    if (status === 'approved') {
+      loan.repaymentSchedule = calculateRepaymentSchedule(
+        loan.amount,
+        loan.term
+      );
     }
+
+    const updatedLoan = await loan.save();
+    res.json(updatedLoan);
+  } else {
+    res.status(404);
+    throw new Error('Loan not found');
+  }
+});
+
+// This is the most important part - exporting all functions as named exports
+export {
+  createLoan,
+  getMyLoans,
+  getAllLoans,
+  getLoanById,
+  updateLoanStatus,
 };
 
-// Borrower submits repayment request
-const requestRepayment = async (req, res) => {
-    try {
-        const { amount } = req.body;
-        const loan = await Loan.findById(req.params.id);
-
-        if (!loan) return res.status(404).json({ message: 'Loan not found' });
-        if (!loan.borrower.equals(req.user._id)) return res.status(403).json({ message: 'Not your loan' });
-        if (loan.status !== 'approved') return res.status(400).json({ message: 'Only approved loans can have repayments' });
-
-        loan.pendingRepayment += amount;
-        await loan.save();
-
-        res.json({
-            message: 'Repayment request submitted, pending admin approval',
-            loan
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
-// Admin approves a repayment
-const approveRepayment = async (req, res) => {
-    try {
-        const loan = await Loan.findById(req.params.id);
-        if (!loan) return res.status(404).json({ message: 'Loan not found' });
-        if (loan.pendingRepayment <= 0) return res.status(400).json({ message: 'No pending repayment to approve' });
-
-        loan.repaymentAmount += loan.pendingRepayment;
-        loan.pendingRepayment = 0;
-
-        // Check if fully paid
-        const totalDue = loan.amount + (loan.amount * loan.interestRate / 100);
-        if (loan.repaymentAmount >= totalDue) {
-            loan.status = 'paid';
-            loan.repaymentAmount = totalDue; // cap repayment
-        }
-
-        await loan.save();
-
-        res.json({
-            message: 'Repayment approved and applied to loan',
-            loan
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
-module.exports = {
-    createLoan,
-    getAllLoans,
-    approveLoan,
-    rejectLoan,
-    requestRepayment,
-    approveRepayment,
-    getMyLoans,
-};

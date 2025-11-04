@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
         },
         role: {
             type: String,
-            enum: ['borrower', 'lender', 'admin'],
+            enum: ['borrower', 'admin'],
             default: 'borrower',
         }
     }, { timestamps: true }

@@ -1,6 +1,28 @@
 const mongoose = require('mongoose');
 
 // define the schema
+const repaymentSchema = new mongoose.Schema(
+    {
+        installment: {
+            type: Number,
+            required: true
+        },
+        dueDate: {
+            type: Date,
+            required: true
+        },
+        amount: {
+            type: Number,
+            required: true
+        },
+        status: {
+            type: String,
+            enum: ['pending', 'paid'],
+            default: 'pending'
+        }
+    }
+);
+
 const loanSchema = new mongoose.Schema(
     {
         borrower: {
@@ -10,7 +32,7 @@ const loanSchema = new mongoose.Schema(
         },
         amount: {
             type: Number,
-            required: true
+            required:[ true, 'Please enter loan amount' ]
         },
         interestRate: {
             type: Number,
@@ -26,14 +48,22 @@ const loanSchema = new mongoose.Schema(
             enum: ['pending', 'approved', 'rejected', 'paid'],
             default: 'pending'
         },
-        repaymentAmount: {
+       
+        repaymentSchedule: [repaymentSchema],
+
+        totalInterest: {
             type: Number,
-            default: 0
         },
-        pendingRepayment: {
+        totalRepayable: {
             type: Number,
-            default: 0
+        },
+        NextDueDate: {
+            type: Date,
+        },
+        OutstandingBalance: {
+            type: Number,
         }
+        
     }, { timestamps: true }
 );
 

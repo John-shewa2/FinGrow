@@ -1,26 +1,32 @@
+const express = require('express');
+const {
+  createLoan,
+  getMyLoans,
+  getAllLoans,
+  getLoanById,
+  updateLoanStatus,
+} = require('../controllers/loanController');
+
 const { protect } = require('../middlewares/authMiddleware');
-const { authorizeRoles } = require('../middlewares/roleMiddleware');
-const { createLoan, getAllLoans, getMyLoans, approveLoan, rejectLoan, requestRepayment, approveRepayment } = require('../controllers/loanController');
+const admin = require('../middlewares/roleMiddleware');
 
-const router = require('express').Router();
+const router = express.Router();
 
-// Borrower creates loan
-router.post('/', protect, createLoan);
+// --- Combined '/' Routes ---
+router
+  .route('/')
+  .post(protect, createLoan)
+  .get(protect, admin, getAllLoans);
 
-// Admin can see all loans
-router.get('/', protect, authorizeRoles('admin'), getAllLoans);
-// Borrower gets their own loans
-router.get('/my', protect, getMyLoans);
+// --- Borrower Route ---
+router.route('/myloans').get(protect, getMyLoans);
 
+// --- Shared & Admin-Specific ID Routes ---
+router.route('/:id').get(protect, getLoanById);
 
-// Admin approves/rejects loans
-router.put('/:id/approve', protect, authorizeRoles('admin'), approveLoan);
-router.put('/:id/reject', protect, authorizeRoles('admin'), rejectLoan);
-
-// Borrower requests repayment
-router.post('/:id/request-repayment', protect, requestRepayment);
-
-// Admin approves repayment
-router.put('/:id/approve-repayment', protect, authorizeRoles('admin'), approveRepayment);
+// PUT /api/loans/:id/status (Admin: Approve/Reject a loan)
+router.route('/:id/status').put(protect, admin, updateLoanStatus);
 
 module.exports = router;
+
+

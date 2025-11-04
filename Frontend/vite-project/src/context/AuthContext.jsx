@@ -1,40 +1,73 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect } from 'react';
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true); // <-- add loading
+  const [auth, setAuth] = useState(() => {
+    // Try to get auth data from localStorage on initial load
+    const storedAuth = localStorage.getItem('auth');
+    try {
+      return storedAuth ? JSON.parse(storedAuth) : { token: null, user: null };
+    } catch (e) {
+      console.error('Error parsing auth from localStorage', e);
+      return { token: null, user: null };
+    }
+  });
+  
+  // This state prevents redirects before auth is checked
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const storedToken = localStorage.getItem("token");
-
-    if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
-      setToken(storedToken);
+    const storedAuth = localStorage.getItem('auth');
+    if (storedAuth) {
+      try {
+        setAuth(JSON.parse(storedAuth));
+      } catch (e) {
+        console.error('Error parsing auth from localStorage', e);
+        localStorage.removeItem('auth');
+        setAuth({ token: null, user: null });
+      }
     }
-    setLoading(false); // <-- done loading
+    setLoading(false);
   }, []);
 
-  const login = (userData, jwtToken) => {
-    setUser(userData);
-    setToken(jwtToken);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", jwtToken);
+  // This is the LOGIN function your app will use
+  const login = (data) => {
+    // data should be { token, user } from the backend
+    const authData = { token: data.token, user: data.user };
+    setAuth(authData);
+    localStorage.setItem('auth', JSON.stringify(authData));
   };
 
+  // This is the REGISTER function your app will use
+  const register = (data) => {
+    const authData = { token: data.token, user: data.user };
+    setAuth(authData);
+    localStorage.setItem('auth', JSON.stringify(authData));
+  };
+
+  // This is the LOGOUT function
   const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    setAuth({ token: null, user: null });
+    localStorage.removeItem('auth');
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated: !!auth.token,
+        user: auth.user,
+        token: auth.token,
+        login,
+        register,
+        logout,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
+
+export default AuthContext;
+

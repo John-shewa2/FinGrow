@@ -1,38 +1,56 @@
-import React, { useContext } from "react";
-import { Link, Navigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
+import React, { useState } from 'react';
+import LoanRequestForm from '../components/LoanRequestForm'; 
+import MyLoans from '../components/MyLoans'; 
+const Dashboard = () => {
+  // State to manage which view is active: 'myLoans' or 'requestLoan'
+  const [activeView, setActiveView] = useState('myLoans');
 
-export default function Dashboard() {
-  const { user, logout, loading } = useContext(AuthContext);
-
-  // Redirect to login if not logged in
-  if (loading) return <p>Loading...</p>; // <-- wait for auth state
-  if (!user) return <Navigate to="/login" />; // <-- redirect only if not logged in
+  const getButtonClasses = (viewName) => {
+    return activeView === viewName
+      ? 'bg-blue-600 text-white'
+      : 'bg-white text-gray-800 hover:bg-gray-100';
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <header className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">Fingrow Dashboard</h1>
-        <nav>
-          <Link className="text-blue-600 mr-4" to="/loans">My Loans</Link>
-          <span className="mr-4">Hello, {user.name}</span>
-          <button
-            className="text-red-600"
-            onClick={logout}
-          >
-            Logout
-          </button>
-        </nav>
-      </header>
-
-      <main>
-        <div className="bg-white p-6 rounded shadow">
-          <h2 className="text-lg font-semibold mb-2">Welcome to Fingrow</h2>
-          <p className="text-sm text-gray-600">
-            You are logged in as <strong>{user.role}</strong>.
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Borrower Dashboard
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Welcome! Manage your loans or request a new one.
           </p>
         </div>
-      </main>
+
+        {/* View Toggle Buttons */}
+        <div className="flex space-x-4 mb-6">
+          <button
+            onClick={() => setActiveView('myLoans')}
+            className={`px-6 py-3 font-semibold rounded-lg shadow-md transition duration-200 ${getButtonClasses(
+              'myLoans'
+            )}`}
+          >
+            My Loans
+          </button>
+          <button
+            onClick={() => setActiveView('requestLoan')}
+            className={`px-6 py-3 font-semibold rounded-lg shadow-md transition duration-200 ${getButtonClasses(
+              'requestLoan'
+            )}`}
+          >
+            Request New Loan
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          {activeView === 'myLoans' ? <MyLoans /> : <LoanRequestForm />}
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default Dashboard;

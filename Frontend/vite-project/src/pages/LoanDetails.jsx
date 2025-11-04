@@ -1,0 +1,171 @@
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { getLoanById } from '../api/loanApi';
+
+// Re-using helper functions
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
+const formatCurrency = (amount) => {
+  if (amount === null || amount === undefined) return 'N/A';
+  return `$${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+const getPaymentStatusClasses = (status) => {
+  return status === 'paid'
+    ? 'bg-green-100 text-green-800'
+    : 'bg-yellow-100 text-yellow-800';
+};
+
+const LoanDetails = () => {
+  const [loan, setLoan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { id } = useParams(); // Get loan ID from URL
+
+  useEffect(() => {
+    const fetchLoan = async () => {
+      try {
+        setLoading(true);
+        const { data } = await getLoanById(id);
+        setLoan(data);
+        setError(null);
+      } catch (err) {
+        setError(
+          err.response?.data?.message || 'Failed to fetch loan details.'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchLoan();
+    }
+  }, [id]);
+
+  if (loading) {
+    return <div className="text-center p-10">Loading loan details...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-10 text-red-600" role="alert">
+        {error}
+      </div>
+    );
+  }
+
+  if (!loan) {
+    return <div className="text-center p-10">Loan not found.</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Repayment Schedule
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Details for loan requested on {formatDate(loan.createdAt)}
+          </p>
+        </div>
+
+        {/* Loan Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-sm font-medium text-gray-500">
+              Total Amount
+            </div>
+            <div className="text-2xl font-bold text-gray-800">
+              {formatCurrency(loan.amount)}
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-sm font-medium text-gray-500">
+              Total Payable
+            </div>
+            <div className="text-2xl font-bold text-gray-800">
+              {formatCurrency(loan.totalPayable)}
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-sm font-medium text-gray-500">
+              Term
+            </div>
+            <div className="text-2xl font-bold text-gray-800">
+              {loan.term} Months
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-sm font-medium text-gray-500">
+              Outstanding
+            </div>
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(loan.outstandingBalance)}
+            </div>
+          </div>
+        </div>
+
+        {/* Repayment Table */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Installment
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Due Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount Due
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {loan.repaymentSchedule.map((payment) => (
+                <tr key={payment.installment}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {payment.installment}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {formatDate(payment.dueDate)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {formatCurrency(payment.amount)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span
+                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusClasses(
+                        payment.status
+                      )}`}
+                    >
+                      {payment.status.charAt(0).toUpperCase() +
+                        payment.status.slice(1)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoanDetails;

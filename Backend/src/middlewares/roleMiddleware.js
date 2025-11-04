@@ -1,11 +1,11 @@
-// Middleware to allow only specific roles
-const authorizeRoles = (...roles) => {
-    return (req, res, next) => {
-        if (!roles.includes(req.user.role)) {
-            return res.status(403).json({ message: 'Forbidden: You do not have access to this resource' });
-        }
-        next();
-    };
+const admin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(401);
+    throw new Error('Not authorized as an admin');
+  }
 };
 
-module.exports = { authorizeRoles };
+module.exports = admin;
+
