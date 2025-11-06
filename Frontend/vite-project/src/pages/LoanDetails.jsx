@@ -69,6 +69,20 @@ const LoanDetails = () => {
     return <div className="text-center p-10">Loan not found.</div>;
   }
 
+  // --- Calculations for summary figures ---
+
+  // Overdue balance is the sum of all 'pending' (due) installments.
+  const overdueBalance = loan.repaymentSchedule
+    .filter((payment) => payment.status === 'pending')
+    .reduce((sum, payment) => sum + payment.installment, 0);
+
+  // Amount paid so far is the sum of principal from 'paid' installments
+  const amountPaid = loan.repaymentSchedule
+    .filter((payment) => payment.status === 'paid')
+    .reduce((sum, payment) => sum + payment.installment, 0);
+  const outstandingBalance = loan.amount - amountPaid;
+
+
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -93,10 +107,10 @@ const LoanDetails = () => {
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-sm font-medium text-gray-500">
-              Total Payable
+              Overdue Balance
             </div>
             <div className="text-2xl font-bold text-gray-800">
-              {formatCurrency(loan.totalPayable)}
+              {formatCurrency(overdueBalance)}
             </div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
@@ -104,7 +118,7 @@ const LoanDetails = () => {
               Term
             </div>
             <div className="text-2xl font-bold text-gray-800">
-              {loan.term} Months
+              {loan.termMonths} Months
             </div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
@@ -112,7 +126,7 @@ const LoanDetails = () => {
               Outstanding
             </div>
             <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(loan.outstandingBalance)}
+              {formatCurrency(outstandingBalance)}
             </div>
           </div>
         </div>
@@ -122,9 +136,6 @@ const LoanDetails = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Installment
-                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Due Date
                 </th>
@@ -138,15 +149,12 @@ const LoanDetails = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loan.repaymentSchedule.map((payment) => (
-                <tr key={payment.installment}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {payment.installment}
-                  </td>
+                <tr key={payment._id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {formatDate(payment.dueDate)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatCurrency(payment.amount)}
+                    {formatCurrency(payment.installment)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <span

@@ -27,7 +27,7 @@ const Register = () => {
     setError(null);
 
     try {
-      const registerData = { username, email, password };
+      const registerData = { name: username, email, password };
       const { data } = await registerUser(registerData); // Call the API
 
       // --- THIS IS THE FIX ---
