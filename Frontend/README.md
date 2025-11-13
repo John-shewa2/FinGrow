@@ -1,18 +1,82 @@
-# React + Vite
+# FinGrow Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend for the FinGrow application, built with React and Vite.
 
-Currently, two official plugins are available:
+FinGrow is a web application designed to streamline the personal loan process. It provides a platform for users to apply for loans and track their status, and for administrators to manage and approve applications.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features
 
-## React Compiler
+- **User Authentication**: Secure login and registration for both borrowers and administrators.
+- **Loan Application**: Borrowers can easily apply for new loans by specifying the desired amount and repayment term.
+- **Borrower Dashboard**: Borrowers can view a list of their loans, check their status (pending, approved, rejected), and see detailed repayment schedules for approved loans.
+- **Admin Dashboard**: Administrators have a comprehensive view of all loan applications. They can filter loans by status and have the authority to approve or reject them.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## 🛠️ Tech Stack
 
-Note: This will impact Vite dev & build performances.
+- **Framework**: [React](https://reactjs.org/)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Styling**: [e.g., CSS Modules, Styled-Components, Tailwind CSS]
+- **State Management**: [e.g., Redux, Context API]
+- **API Communication**: [e.g., Axios, Fetch API]
 
-## Expanding the ESLint configuration
+## 📋 Prerequisites
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Before you begin, ensure you have the following installed:
+
+- Node.js (v18.x or higher recommended)
+- npm or Yarn
+
+## 🚀 Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://[your-git-repository-url]/FinGrow.git
+cd FinGrow/Frontend
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+# or
+yarn install
+```
+
+### 3. Set up Environment Variables
+
+Create a `.env.local` file in the `Frontend` directory and add the necessary environment variables. For Vite, environment variables exposed to the client should be prefixed with `VITE_`.
+
+```env
+# .env.local
+VITE_API_URL=http://localhost:5000/api
+```
+
+### 4. Run the application
+
+To start the development server:
+
+```bash
+npm run dev
+```
+
+The application will be running on `http://localhost:5173` (or another port specified by Vite).
+
+## 📁 Project Structure (Example)
+
+A typical structure for a React + Vite application:
+```
+/src
+|-- /api         # Functions for making API requests
+|-- /components  # Reusable UI components
+|-- /hooks       # Custom React hooks
+|-- /pages       # Page-level components
+|-- /store       # State management (e.g., Redux, Zustand)
+|-- /styles      # Global styles and assets
+|-- App.jsx      # Main application component
+|-- main.jsx     # Application entry point
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a pull request.
