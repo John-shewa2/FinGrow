@@ -5,13 +5,23 @@ const repaymentSchema = new mongoose.Schema(
     {
         installment: {
             type: Number,
-            required: true
+            required: true // Total monthly payment (Principal + Interest)
         },
         dueDate: {
             type: Date,
             required: true
         },
         amount: {
+            type: Number,
+            required: true // Principal portion
+        },
+        // *** ADDED: Interest portion for this specific month ***
+        interest: {
+            type: Number,
+            required: true
+        },
+        // *** ADDED: Balance remaining after this payment ***
+        remainingBalance: {
             type: Number,
             required: true
         },
@@ -37,7 +47,7 @@ const loanSchema = new mongoose.Schema(
         interestRate: {
             type: Number,
             required: true,
-            default: 7 // This will be used on creation
+            default: 7
         },
         termMonths: {
             type: Number,

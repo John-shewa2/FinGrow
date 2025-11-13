@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getInterestRate } from '../api/settingsApi'; // <-- 1. IMPORT
-
-// const ANNUAL_INTEREST_RATE = 0.07; // <-- No longer hardcoded
+import { getInterestRate } from '../api/settingsApi';
 
 const formatCurrency = (amount) => {
   return `$${amount.toLocaleString('en-US', {
@@ -15,13 +13,12 @@ const InterestCalculator = () => {
   const [term, setTerm] = useState(12);
   const [monthlyPayment, setMonthlyPayment] = useState(0);
   const [totalRepayment, setTotalRepayment] = useState(0);
+  const [totalInterest, setTotalInterest] = useState(0); // New metric
   
-  // *** MODIFIED: State to hold the fetched rate ***
-  const [annualRate, setAnnualRate] = useState(7); // Default to 7
+  const [annualRate, setAnnualRate] = useState(7);
   const [rateLoading, setRateLoading] = useState(true);
 
   useEffect(() => {
-    // *** MODIFIED: Fetch the rate from the API ***
     const fetchRate = async () => {
         try {
             setRateLoading(true);
@@ -29,7 +26,7 @@ const InterestCalculator = () => {
             setAnnualRate(data.interestRate || 7);
         } catch (err) {
             console.error("Failed to fetch rate, using default.", err);
-            setAnnualRate(7); // Fallback
+            setAnnualRate(7); 
         } finally {
             setRateLoading(false);
         }
@@ -40,40 +37,48 @@ const InterestCalculator = () => {
   useEffect(() => {
     const principal = Number(amount);
     const termMonths = Number(term);
-    
-    // *** MODIFIED: Use the 'annualRate' from state ***
-    const rateDecimal = annualRate / 100;
+    const monthlyRate = (annualRate / 100) / 12;
 
     if (principal > 0 && termMonths > 0) {
-      const monthlyInterest = (principal * rateDecimal) / 12;
-      const monthlyPrincipal = principal / termMonths;
-      const calculatedMonthlyPayment = monthlyPrincipal + monthlyInterest;
-      const calculatedTotalRepayment = calculatedMonthlyPayment * termMonths;
+      // Standard Amortization Formula
+      // EMI = [P x r x (1+r)^n] / [(1+r)^n-1]
+      
+      let emi = 0;
+      if (monthlyRate === 0) {
+          // Edge case: 0% interest
+          emi = principal / termMonths;
+      } else {
+          const pow = Math.pow(1 + monthlyRate, termMonths);
+          emi = (principal * monthlyRate * pow) / (pow - 1);
+      }
 
-      setMonthlyPayment(calculatedMonthlyPayment);
+      const calculatedTotalRepayment = emi * termMonths;
+      const calculatedTotalInterest = calculatedTotalRepayment - principal;
+
+      setMonthlyPayment(emi);
       setTotalRepayment(calculatedTotalRepayment);
+      setTotalInterest(calculatedTotalInterest);
     } else {
       setMonthlyPayment(0);
       setTotalRepayment(0);
+      setTotalInterest(0);
     }
-  }, [amount, term, annualRate]); // <-- 3. Add annualRate to dependency array
+  }, [amount, term, annualRate]);
 
   return (
     <div className="mb-8 p-6 bg-gray-50 border border-gray-200 rounded-lg">
       <h3 className="text-xl font-semibold text-gray-700 mb-4">
-        Estimate Your Payments
+        Amortization Calculator
       </h3>
       
-      {/* *** MODIFIED: Show the dynamic rate *** */}
       <p className="text-sm text-gray-500 mb-4">
         {rateLoading 
             ? 'Loading current rate...' 
-            : `Based on current ${annualRate}% annual flat rate. Admins may adjust this rate upon review.`
+            : `Based on the current ${annualRate}% Annual Percentage Rate (APR).`
         }
       </p>
       
       <div className="space-y-4">
-        {/* ... (Inputs remain the same) ... */}
         <div>
           <label
             htmlFor="calc-amount"
@@ -108,12 +113,17 @@ const InterestCalculator = () => {
           />
         </div>
 
-        {/* ... (Results display remains the same) ... */}
-        <div className="pt-4 space-y-2">
+        <div className="pt-4 space-y-2 border-t border-gray-200 mt-4">
           <div className="flex justify-between items-center">
             <span className="text-gray-600 font-medium">Monthly Payment:</span>
             <span className="text-xl font-bold text-blue-600">
               {formatCurrency(monthlyPayment)}
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 font-medium">Total Interest:</span>
+            <span className="text-gray-800">
+              {formatCurrency(totalInterest)}
             </span>
           </div>
           <div className="flex justify-between items-center">

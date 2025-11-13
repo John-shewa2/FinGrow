@@ -1,16 +1,21 @@
 const Loan = require('../models/Loan');
 const User = require('../models/user');
-const Settings = require('../models/Settings'); // <-- 1. IMPORT SETTINGS
+const Settings = require('../models/Settings');
 const asyncHandler = require('express-async-handler');
 
-// Helper function to calculate repayment schedule
-// *** MODIFIED: Renamed to 'generate' and uses decimal rate ***
+// Helper: Standard Amortization Schedule
 const generateRepaymentSchedule = (amount, termMonths, annualRateDecimal) => {
   const schedule = [];
+  let balance = amount;
+  
+  // Monthly interest rate
+  const monthlyRate = annualRateDecimal / 12;
 
-  const monthlyInterest = (amount * annualRateDecimal) / 12;
-  const monthlyPrincipal = amount / termMonths;
-  const monthlyPayment = monthlyPrincipal + monthlyInterest;
+  // Calculate Fixed Monthly EMI using the formula
+  // EMI = [P x r x (1+r)^n] / [(1+r)^n-1]
+  const emi = 
+    (amount * monthlyRate * Math.pow(1 + monthlyRate, termMonths)) /
+    (Math.pow(1 + monthlyRate, termMonths) - 1);
 
   const addMonths = (date, months) => {
     const d = new Date(date);
@@ -19,14 +24,29 @@ const generateRepaymentSchedule = (amount, termMonths, annualRateDecimal) => {
   };
 
   for (let i = 1; i <= termMonths; i++) {
-    const dueDate = addMonths(new Date(), i); // approx monthly due date
+    // 1. Calculate interest for this month based on remaining balance
+    const interestPart = balance * monthlyRate;
+    
+    // 2. Calculate principal part (EMI - Interest)
+    let principalPart = emi - interestPart;
+
+    // Handle last month rounding differences to ensure balance hits 0
+    if (i === termMonths || balance < principalPart) {
+        principalPart = balance;
+    }
+
+    // 3. Update balance
+    balance -= principalPart;
+
+    const dueDate = addMonths(new Date(), i);
+
     schedule.push({
-      amount: parseFloat(monthlyPrincipal.toFixed(2)),   // principal portion
-      installment: parseFloat(monthlyPayment.toFixed(2)),// total monthly payment
-      dueDate,                                           // Date object
-      // optional extra fields (not required by schema)
-      interest: parseFloat(monthlyInterest.toFixed(2)),
-      remainingBalance: parseFloat(Math.max(amount - monthlyPrincipal * i, 0).toFixed(2)),
+      installment: parseFloat((principalPart + interestPart).toFixed(2)), // Total EMI
+      dueDate,
+      amount: parseFloat(principalPart.toFixed(2)),      // Principal portion
+      interest: parseFloat(interestPart.toFixed(2)),     // Interest portion
+      remainingBalance: parseFloat(Math.max(0, balance).toFixed(2)),
+      status: 'pending'
     });
   }
 
@@ -38,28 +58,33 @@ const generateRepaymentSchedule = (amount, termMonths, annualRateDecimal) => {
 // @access  Private (Borrower)
 const createLoan = asyncHandler(async (req, res) => {
   try {
-    // ... (This function remains the same as your last version)
     if (!req.user) {
       res.status(401);
       throw new Error('Not authorized, no user information');
     }
+
     const { amount } = req.body;
     let termMonths = req.body.termMonths ?? req.body.term ?? req.body.duration;
+
     if (amount == null || termMonths == null) {
       res.status(400);
       throw new Error('Please provide an amount and a term (termMonths)');
     }
+
     termMonths = parseInt(termMonths, 10);
     if (isNaN(termMonths) || termMonths <= 0) {
       res.status(400);
       throw new Error('Invalid term (termMonths) value');
     }
+
     const loan = new Loan({
       borrower: req.user._id,
       amount,
-      termMonths, 
+      termMonths,
       status: 'pending',
+      // interestRate will use the schema default (7) until approved/recalculated
     });
+
     const createdLoan = await loan.save();
     res.status(201).json(createdLoan);
   } catch (err) {
@@ -69,23 +94,29 @@ const createLoan = asyncHandler(async (req, res) => {
   }
 });
 
-// ... (getMyLoans, getAllLoans, getLoanById remain the same) ...
+// @desc    Get logged in user's loans
+// @route   GET /api/loans/myloans
+// @access  Private (Borrower)
 const getMyLoans = asyncHandler(async (req, res) => {
   const loans = await Loan.find({ borrower: req.user._id });
   res.json(loans);
 });
 
+// @desc    Get all loans (for admin)
+// @route   GET /api/loans
+// @access  Private (Admin)
 const getAllLoans = asyncHandler(async (req, res) => {
   const status = req.query.status
-    ? {
-        status: req.query.status,
-      }
+    ? { status: req.query.status }
     : {}; 
 
   const loans = await Loan.find({ ...status }).populate('borrower', 'username email');
   res.json(loans);
 });
 
+// @desc    Get loan by ID
+// @route   GET /api/loans/:id
+// @access  Private (Borrower or Admin)
 const getLoanById = asyncHandler(async (req, res) => {
   const loan = await Loan.findById(req.params.id).populate(
     'borrower',
@@ -108,13 +139,11 @@ const getLoanById = asyncHandler(async (req, res) => {
   }
 });
 
-
 // @desc    Update loan status (approve/reject)
 // @route   PUT /api/loans/:id/status
 // @access  Private (Admin)
 const updateLoanStatus = asyncHandler(async (req, res) => {
   try {
-    // *** MODIFIED: Only get 'status' from body ***
     const { status } = req.body; 
 
     if (!status || (status !== 'approved' && status !== 'rejected')) {
@@ -135,7 +164,6 @@ const updateLoanStatus = asyncHandler(async (req, res) => {
       throw new Error('Loan not found');
     }
     
-    // Only update if status is changing
     if (loan.status === status) {
         return res.json(loan);
     }
@@ -143,18 +171,17 @@ const updateLoanStatus = asyncHandler(async (req, res) => {
     loan.status = status;
 
     if (status === 'approved') {
-      // *** MODIFIED: Fetch the global rate on approval ***
+      // Fetch global rate
       const settings = await Settings.getSettings();
       const currentRate = settings.interestRate;
       
-      // Save this rate to the loan as a snapshot
       loan.interestRate = currentRate; 
       
-      // Generate schedule using the global rate
+      // Generate Schedule with AMORTIZATION Logic
       loan.repaymentSchedule = generateRepaymentSchedule(
         loan.amount, 
         loan.termMonths ?? loan.term, 
-        currentRate / 100 // Pass as decimal
+        currentRate / 100
       );
     }
 
