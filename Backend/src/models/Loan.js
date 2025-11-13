@@ -37,7 +37,7 @@ const loanSchema = new mongoose.Schema(
         interestRate: {
             type: Number,
             required: true,
-            default: 7
+            default: 7 // This will be used on creation
         },
         termMonths: {
             type: Number,

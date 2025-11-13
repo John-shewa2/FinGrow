@@ -8,6 +8,7 @@ import LoanDetails from "../pages/LoanDetails";
 import Navbar from "../components/Navbar";
 import AuthContext from "../context/AuthContext";
 import { ProtectedRoute, AdminRoute } from "./ProtectedRoutes";
+import CalculatorPage from "../pages/CalculatorPage"; // <-- 1. IMPORT IT
 
 const AppRoutes = () => {
   const { isAuthenticated, user } = useContext(AuthContext);
@@ -37,6 +38,7 @@ const AppRoutes = () => {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/calculator" element={<CalculatorPage />} /> {/* <-- 2. ADD THE ROUTE */}
 
         {/* --- Protected Borrower Routes --- */}
         <Route element={<ProtectedRoute />}>

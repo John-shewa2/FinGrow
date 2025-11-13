@@ -43,6 +43,14 @@ const Navbar = () => {
                   </Link>
                 )}
 
+                {/* ADDED CALCULATOR LINK for logged-in users */}
+                <Link
+                  to="/calculator"
+                  className="text-white hover:text-gray-100 font-medium transition duration-150"
+                >
+                  Loan Calculator
+                </Link>
+
                 {/* Logout Button */}
                 <button
                   onClick={handleLogout}
@@ -53,6 +61,14 @@ const Navbar = () => {
               </>
             ) : (
               <>
+                {/* ADDED CALCULATOR LINK for logged-out users */}
+                <Link
+                  to="/calculator"
+                  className="text-white hover:text-gray-100 font-medium transition duration-150"
+                >
+                  Loan Calculator
+                </Link>
+
                 {/* Links for logged-out users */}
                 <Link
                   to="/login"

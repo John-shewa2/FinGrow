@@ -16,7 +16,7 @@ export const getAllLoans = (status = '') => {
   return api.get(`/loans?status=${status}`);
 };
 
-// changed: use PUT to match backend route
+// *** MODIFIED: Reverted to only send status ***
 export const updateLoanStatus = (id, status) => {
   return api.put(`/loans/${id}/status`, { status });
 };

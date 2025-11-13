@@ -1,12 +1,14 @@
 const Loan = require('../models/Loan');
 const User = require('../models/user');
+const Settings = require('../models/Settings'); // <-- 1. IMPORT SETTINGS
 const asyncHandler = require('express-async-handler');
 
 // Helper function to calculate repayment schedule
-const calculateRepaymentSchedule = (amount, termMonths) => {
+// *** MODIFIED: Renamed to 'generate' and uses decimal rate ***
+const generateRepaymentSchedule = (amount, termMonths, annualRateDecimal) => {
   const schedule = [];
-  const interestRate = 0.05; // annual
-  const monthlyInterest = (amount * interestRate) / 12;
+
+  const monthlyInterest = (amount * annualRateDecimal) / 12;
   const monthlyPrincipal = amount / termMonths;
   const monthlyPayment = monthlyPrincipal + monthlyInterest;
 
@@ -36,36 +38,28 @@ const calculateRepaymentSchedule = (amount, termMonths) => {
 // @access  Private (Borrower)
 const createLoan = asyncHandler(async (req, res) => {
   try {
-    console.log('createLoan called - body:', req.body);
-    console.log('createLoan - req.user:', req.user && { id: req.user._id, role: req.user.role });
-
+    // ... (This function remains the same as your last version)
     if (!req.user) {
       res.status(401);
       throw new Error('Not authorized, no user information');
     }
-
     const { amount } = req.body;
-    // accept multiple possible names from frontend and normalize to termMonths
     let termMonths = req.body.termMonths ?? req.body.term ?? req.body.duration;
-
     if (amount == null || termMonths == null) {
       res.status(400);
       throw new Error('Please provide an amount and a term (termMonths)');
     }
-
     termMonths = parseInt(termMonths, 10);
     if (isNaN(termMonths) || termMonths <= 0) {
       res.status(400);
       throw new Error('Invalid term (termMonths) value');
     }
-
     const loan = new Loan({
       borrower: req.user._id,
       amount,
-      termMonths, // match required schema field
+      termMonths, 
       status: 'pending',
     });
-
     const createdLoan = await loan.save();
     res.status(201).json(createdLoan);
   } catch (err) {
@@ -75,31 +69,23 @@ const createLoan = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get logged in user's loans
-// @route   GET /api/loans/myloans
-// @access  Private (Borrower)
+// ... (getMyLoans, getAllLoans, getLoanById remain the same) ...
 const getMyLoans = asyncHandler(async (req, res) => {
   const loans = await Loan.find({ borrower: req.user._id });
   res.json(loans);
 });
 
-// @desc    Get all loans (for admin)
-// @route   GET /api/loans
-// @access  Private (Admin)
 const getAllLoans = asyncHandler(async (req, res) => {
   const status = req.query.status
     ? {
-        status: req.query.status, // Filter by status (pending, approved, rejected)
+        status: req.query.status,
       }
-    : {}; // No filter, get all
+    : {}; 
 
   const loans = await Loan.find({ ...status }).populate('borrower', 'username email');
   res.json(loans);
 });
 
-// @desc    Get loan by ID
-// @route   GET /api/loans/:id
-// @access  Private (Borrower or Admin)
 const getLoanById = asyncHandler(async (req, res) => {
   const loan = await Loan.findById(req.params.id).populate(
     'borrower',
@@ -107,7 +93,6 @@ const getLoanById = asyncHandler(async (req, res) => {
   );
 
   if (loan) {
-    // Check if user is the borrower OR an admin
     if (
       loan.borrower._id.toString() === req.user._id.toString() ||
       req.user.role === 'admin'
@@ -123,21 +108,20 @@ const getLoanById = asyncHandler(async (req, res) => {
   }
 });
 
+
 // @desc    Update loan status (approve/reject)
 // @route   PUT /api/loans/:id/status
 // @access  Private (Admin)
 const updateLoanStatus = asyncHandler(async (req, res) => {
   try {
-    console.log('updateLoanStatus called - id:', req.params.id, 'body:', req.body, 'user:', req.user && { id: req.user._id, role: req.user.role });
-
-    const { status } = req.body; // Expecting { status: 'approved' } or { status: 'rejected' }
+    // *** MODIFIED: Only get 'status' from body ***
+    const { status } = req.body; 
 
     if (!status || (status !== 'approved' && status !== 'rejected')) {
       res.status(400);
       throw new Error('Invalid status');
     }
 
-    // validate ObjectId format early
     const id = req.params.id;
     if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) {
       res.status(400);
@@ -150,11 +134,28 @@ const updateLoanStatus = asyncHandler(async (req, res) => {
       res.status(404);
       throw new Error('Loan not found');
     }
+    
+    // Only update if status is changing
+    if (loan.status === status) {
+        return res.json(loan);
+    }
 
     loan.status = status;
 
     if (status === 'approved') {
-      loan.repaymentSchedule = calculateRepaymentSchedule(loan.amount, loan.termMonths ?? loan.term);
+      // *** MODIFIED: Fetch the global rate on approval ***
+      const settings = await Settings.getSettings();
+      const currentRate = settings.interestRate;
+      
+      // Save this rate to the loan as a snapshot
+      loan.interestRate = currentRate; 
+      
+      // Generate schedule using the global rate
+      loan.repaymentSchedule = generateRepaymentSchedule(
+        loan.amount, 
+        loan.termMonths ?? loan.term, 
+        currentRate / 100 // Pass as decimal
+      );
     }
 
     const updatedLoan = await loan.save();
@@ -173,4 +174,3 @@ module.exports = {
   getLoanById,
   updateLoanStatus,
 };
-

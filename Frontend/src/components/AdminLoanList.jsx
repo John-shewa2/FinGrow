@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getAllLoans, updateLoanStatus } from '../api/loanApi';
+import { getAllLoans, updateLoanStatus } from '../api/loanApi'; // updateLoanStatus is now simpler
 import { Link } from 'react-router-dom';
 
-// Re-using helper functions
+// ... (formatDate and formatCurrency helpers remain the same) ...
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -20,16 +20,13 @@ const formatCurrency = (amount) => {
   })}`;
 };
 
-/**
- * A component to display loans based on status, with admin actions.
- * @param {object} props - Component props
- * @param {string} props.status - The status of loans to fetch ('pending', 'approved', 'rejected')
- */
 const AdminLoanList = ({ status }) => {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [actionLoading, setActionLoading] = useState(null); // Tracks loading state for approve/reject
+  const [actionLoading, setActionLoading] = useState(null);
+  
+  // *** MODIFIED: Removed the 'rates' state ***
 
   // Function to fetch loans based on the status prop
   const fetchLoans = async () => {
@@ -37,6 +34,7 @@ const AdminLoanList = ({ status }) => {
       setLoading(true);
       const { data } = await getAllLoans(status);
       setLoans(data);
+      // *** MODIFIED: Removed rates population logic ***
       setError(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch loans.');
@@ -47,27 +45,28 @@ const AdminLoanList = ({ status }) => {
 
   useEffect(() => {
     fetchLoans();
-  }, [status]); // Re-fetch when the status prop changes
+  }, [status]); 
 
-  // Handler for approving or rejecting a loan
+  // *** MODIFIED: Removed handleRateChange function ***
+
+  // *** MODIFIED: Simplified to only send status ***
   const handleUpdateStatus = async (id, newStatus) => {
-    setActionLoading(id); // Set loading for this specific loan
+    setActionLoading(id);
     try {
+      // API call is now simpler
       await updateLoanStatus(id, newStatus);
-      // Refresh the list after update
       fetchLoans();
     } catch (err) {
       console.error(`Failed to ${newStatus} loan:`, err);
-      // You could set an error message here
     } finally {
       setActionLoading(null);
     }
   };
 
+  // ... (loading, error, no loans render logic is the same) ...
   if (loading) {
     return <div className="text-center p-8">Loading loans...</div>;
   }
-
   if (error) {
     return (
       <div className="text-center p-8 text-red-600" role="alert">
@@ -75,7 +74,6 @@ const AdminLoanList = ({ status }) => {
       </div>
     );
   }
-
   if (loans.length === 0) {
     return (
       <div className="text-center p-8 text-gray-600">
@@ -83,6 +81,7 @@ const AdminLoanList = ({ status }) => {
       </div>
     );
   }
+
 
   return (
     <div className="overflow-x-auto">
@@ -98,9 +97,16 @@ const AdminLoanList = ({ status }) => {
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Term
             </th>
+            {/* *** MODIFIED: Removed Rate column header *** */}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Requested On
             </th>
+            {/* *** MODIFIED: Added Interest Rate column for approved/rejected loans *** */}
+            {status !== 'pending' && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Rate (%)
+                </th>
+            )}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
             </th>
@@ -110,7 +116,6 @@ const AdminLoanList = ({ status }) => {
           {loans.map((loan) => (
             <tr key={loan._id}>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {/* We populated 'borrower' in the backend, so we can access it */}
                 <div>{loan.borrower?.username}</div>
                 <div className="text-xs text-gray-500">
                   {loan.borrower?.email}
@@ -122,11 +127,17 @@ const AdminLoanList = ({ status }) => {
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 {loan.term} months
               </td>
+              {/* *** MODIFIED: Removed rate input cell *** */}
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 {formatDate(loan.createdAt)}
               </td>
+              {/* *** MODIFIED: Show the rate for non-pending loans *** */}
+              {status !== 'pending' && (
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  {loan.interestRate}%
+                </td>
+              )}
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                {/* Only show Approve/Reject buttons for 'pending' loans */}
                 {status === 'pending' && (
                   <>
                     <button
@@ -145,7 +156,6 @@ const AdminLoanList = ({ status }) => {
                     </button>
                   </>
                 )}
-                {/* For non-pending, show a link to the schedule */}
                 {status !== 'pending' && (
                   <Link
                     to={`/loan/${loan._id}`}
