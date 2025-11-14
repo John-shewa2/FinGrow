@@ -74,7 +74,7 @@ const RepaymentForm = ({ loanId, onPaymentSubmit }) => {
             placeholder="e.g., https://receipt.com/img123.png or #TXN12345"
           />
           <p className="text-xs text-gray-500 mt-1">
-            In a real app, this would be a file upload.
+            Please provide a link or reference to your payment receipt.
           </p>
         </div>
         <button
