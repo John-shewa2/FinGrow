@@ -35,7 +35,9 @@ app.listen(PORT, () => {
 const userRoutes = require('./routes/userRoutes');
 const loanRoutes = require('./routes/loanRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 app.use('/api/users', userRoutes.default || userRoutes);
 app.use('/api/loans', loanRoutes.default || loanRoutes);
 app.use('/api/settings', settingsRoutes.default || settingsRoutes);
+app.use('/api/payments', paymentRoutes.default || paymentRoutes);

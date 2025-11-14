@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { getMyLoans } from '../api/loanApi';
+import React, { useState, useEffect } from 'react'; // <-- 1. ADDED useState, useEffect
+import { getMyLoans } from '../api/loanApi'; // <-- 2. ADDED import
 import { Link } from 'react-router-dom';
 
 // Helper function to format dates
@@ -37,7 +37,9 @@ const getStatusClasses = (status) => {
   }
 };
 
+// 3. Changed signature to no longer accept props
 const MyLoans = () => {
+  // 4. ADDED back state and data fetching
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -104,39 +106,68 @@ const MyLoans = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {loans.map((loan) => (
-              <tr key={loan._id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {formatCurrency(loan.amount)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span
-                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClasses(
-                      loan.status
-                    )}`}
-                  >
-                    {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {formatCurrency(loan.outstandingBalance)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {formatDate(loan.nextPaymentDueDate)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  {/* The button to view the schedule. Only show if approved or paid. */}
-                  {(loan.status === 'approved' || loan.status === 'paid') && (
-                    <Link
-                      to={`/loan/${loan._id}`}
-                      className="text-blue-600 hover:text-blue-800"
+            {loans.map((loan) => {
+              // --- Calculation Logic (from previous fix) ---
+              let outstandingBalance = 0;
+              let nextPaymentDate = null;
+
+              if (loan.status === 'approved' && loan.repaymentSchedule?.length > 0) {
+                const nextPayment = loan.repaymentSchedule.find(
+                  (p) => p.status === 'pending'
+                );
+                nextPaymentDate = nextPayment ? nextPayment.dueDate : null;
+                
+                const lastPaidPayment = [...loan.repaymentSchedule]
+                  .reverse()
+                  .find((p) => p.status === 'paid');
+                
+                const totalPaid = loan.repaymentSchedule.reduce(
+                  (sum, p) => sum + p.amountPaid,
+                  0
+                );
+                outstandingBalance = loan.amount - totalPaid;
+
+              } else if (loan.status === 'paid') {
+                outstandingBalance = 0;
+                nextPaymentDate = null;
+              }
+              // --- End of Calculation Logic ---
+
+              return (
+                <tr key={loan._id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {formatCurrency(loan.amount)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span
+                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClasses(
+                        loan.status
+                      )}`}
                     >
-                      Repayment Schedule
-                    </Link>
-                  )}
-                </td>
-              </tr>
-            ))}
+                      {loan.status.charAt(0).toUpperCase() +
+                        loan.status.slice(1)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {formatCurrency(outstandingBalance)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {formatDate(nextPaymentDate)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    {(loan.status === 'approved' ||
+                      loan.status === 'paid') && (
+                      <Link
+                        to={`/loan/${loan._id}`}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        Repayment Schedule
+                      </Link>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

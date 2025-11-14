@@ -8,7 +8,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login'); // Redirect to login after logout
+    navigate('/login'); 
   };
 
   return (
@@ -28,27 +28,49 @@ const Navbar = () => {
               <>
                 {/* Role-based dashboard link */}
                 {user?.role === 'admin' ? (
-                  <Link
-                    to="/admin"
-                    className="text-white hover:text-gray-100 font-medium transition duration-150"
-                  >
-                    Admin Dashboard
-                  </Link>
+                  <>
+                    <Link
+                      to="/admin"
+                      className="text-white hover:text-gray-100 font-medium transition duration-150"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/admin/payments"
+                      className="text-white hover:text-gray-100 font-medium transition duration-150"
+                    >
+                      Payment Approvals
+                    </Link>
+                    <Link
+                      to="/admin/settings"
+                      className="text-white hover:text-gray-100 font-medium transition duration-150"
+                    >
+                      Settings
+                    </Link>
+                  </>
                 ) : (
-                  <Link
-                    to="/dashboard"
-                    className="text-white hover:text-gray-100 font-medium transition duration-150"
-                  >
-                    My Dashboard
-                  </Link>
+                  <>
+                    <Link
+                      to="/dashboard"
+                      className="text-white hover:text-gray-100 font-medium transition duration-150"
+                    >
+                      My Dashboard
+                    </Link>
+                    {/* --- ADDED THIS LINK --- */}
+                    <Link
+                      to="/submit-payment"
+                      className="text-white hover:text-gray-100 font-medium transition duration-150"
+                    >
+                      Submit Payment
+                    </Link>
+                  </>
                 )}
 
-                {/* ADDED CALCULATOR LINK for logged-in users */}
                 <Link
                   to="/calculator"
                   className="text-white hover:text-gray-100 font-medium transition duration-150"
                 >
-                  Loan Calculator
+                  Calculator
                 </Link>
 
                 {/* Logout Button */}
@@ -61,15 +83,12 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                {/* ADDED CALCULATOR LINK for logged-out users */}
                 <Link
                   to="/calculator"
                   className="text-white hover:text-gray-100 font-medium transition duration-150"
                 >
-                  Loan Calculator
+                  Calculator
                 </Link>
-
-                {/* Links for logged-out users */}
                 <Link
                   to="/login"
                   className="text-white hover:text-gray-100 font-medium transition duration-150"
@@ -85,11 +104,7 @@ const Navbar = () => {
               </>
             )}
           </div>
-
-          {/* Mobile Menu Button (Optional - not implemented) */}
-          <div className="md:hidden">
-            {/* You could add a hamburger menu icon here */}
-          </div>
+          {/* ... mobile menu ... */}
         </div>
       </div>
     </nav>

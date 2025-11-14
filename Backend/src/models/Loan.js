@@ -15,15 +15,18 @@ const repaymentSchema = new mongoose.Schema(
             type: Number,
             required: true // Principal portion
         },
-        // *** ADDED: Interest portion for this specific month ***
         interest: {
             type: Number,
             required: true
         },
-        // *** ADDED: Balance remaining after this payment ***
         remainingBalance: {
             type: Number,
             required: true
+        },
+        // *** ADDED: To track partial payments ***
+        amountPaid: {
+            type: Number,
+            default: 0
         },
         status: {
             type: String,
@@ -35,6 +38,7 @@ const repaymentSchema = new mongoose.Schema(
 
 const loanSchema = new mongoose.Schema(
     {
+        // ... (all other fields remain the same) ...
         borrower: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
@@ -58,26 +62,23 @@ const loanSchema = new mongoose.Schema(
             enum: ['pending', 'approved', 'rejected', 'paid'],
             default: 'pending'
         },
-       
         repaymentSchedule: [repaymentSchema],
 
-        totalInterest: {
+        // *** ADDED: To store "advance" payments ***
+        advanceCredit: {
             type: Number,
+            default: 0
         },
-        totalRepayable: {
-            type: Number,
-        },
-        NextDueDate: {
-            type: Date,
-        },
-        OutstandingBalance: {
-            type: Number,
-        }
+        
+        // ... (other fields) ...
+        totalInterest: { type: Number },
+        totalRepayable: { type: Number },
+        NextDueDate: { type: Date },
+        OutstandingBalance: { type: Number }
         
     }, { timestamps: true }
 );
 
 // create the model
 const Loan = mongoose.model('Loan', loanSchema);
-
 module.exports = Loan;

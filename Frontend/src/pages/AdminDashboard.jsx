@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import AdminLoanList from '../components/AdminLoanList';
-import SettingsPanel from '../components/SettingsPanel'; // <-- 1. IMPORT
+// import SettingsPanel from '../components/SettingsPanel'; // <-- 1. REMOVE
+import KpiDashboard from '../components/KpiDashboard';
 
 const AdminDashboard = () => {
-  // State to manage which loan list is active: 'pending', 'approved', 'rejected'
   const [activeView, setActiveView] = useState('pending');
 
   const getButtonClasses = (viewName) => {
@@ -11,6 +11,19 @@ const AdminDashboard = () => {
       ? 'bg-blue-600 text-white'
       : 'bg-white text-gray-800 hover:bg-gray-100';
   };
+  
+  const renderActiveView = () => {
+    switch (activeView) {
+      case 'pending':
+        return <AdminLoanList key="pending" status="pending" />;
+      case 'approved':
+        return <AdminLoanList key="approved" status="approved" />;
+      case 'rejected':
+        return <AdminLoanList key="rejected" status="rejected" />;
+      default:
+        return <AdminLoanList key="pending" status="pending" />;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
@@ -19,12 +32,13 @@ const AdminDashboard = () => {
         <div className="bg-white p-6 rounded-lg shadow-md mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
           <p className="text-gray-600 mt-2">
-            Manage all loan requests and site settings from this panel.
+            View loan statistics and manage all loan applications.
           </p>
         </div>
 
-        {/* --- 2. ADD SETTINGS PANEL HERE --- */}
-        <SettingsPanel />
+        <KpiDashboard />
+
+        {/* <SettingsPanel /> */} {/* <-- 2. REMOVE */}
 
         {/* View Toggle Buttons */}
         <div className="flex space-x-4 mb-6">
@@ -56,8 +70,7 @@ const AdminDashboard = () => {
 
         {/* Content Area */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {/* We pass the activeView as a 'status' prop to the list component */}
-          <AdminLoanList key={activeView} status={activeView} />
+          {renderActiveView()}
         </div>
       </div>
     </div>

@@ -20,3 +20,7 @@ export const getAllLoans = (status = '') => {
 export const updateLoanStatus = (id, status) => {
   return api.put(`/loans/${id}/status`, { status });
 };
+
+export const getLoanStats = () => {
+  return api.get('/loans/stats');
+};

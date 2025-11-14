@@ -8,11 +8,8 @@ const generateRepaymentSchedule = (amount, termMonths, annualRateDecimal) => {
   const schedule = [];
   let balance = amount;
   
-  // Monthly interest rate
   const monthlyRate = annualRateDecimal / 12;
 
-  // Calculate Fixed Monthly EMI using the formula
-  // EMI = [P x r x (1+r)^n] / [(1+r)^n-1]
   const emi = 
     (amount * monthlyRate * Math.pow(1 + monthlyRate, termMonths)) /
     (Math.pow(1 + monthlyRate, termMonths) - 1);
@@ -24,27 +21,22 @@ const generateRepaymentSchedule = (amount, termMonths, annualRateDecimal) => {
   };
 
   for (let i = 1; i <= termMonths; i++) {
-    // 1. Calculate interest for this month based on remaining balance
     const interestPart = balance * monthlyRate;
-    
-    // 2. Calculate principal part (EMI - Interest)
     let principalPart = emi - interestPart;
 
-    // Handle last month rounding differences to ensure balance hits 0
     if (i === termMonths || balance < principalPart) {
         principalPart = balance;
     }
 
-    // 3. Update balance
     balance -= principalPart;
 
     const dueDate = addMonths(new Date(), i);
 
     schedule.push({
-      installment: parseFloat((principalPart + interestPart).toFixed(2)), // Total EMI
+      installment: parseFloat((principalPart + interestPart).toFixed(2)),
       dueDate,
-      amount: parseFloat(principalPart.toFixed(2)),      // Principal portion
-      interest: parseFloat(interestPart.toFixed(2)),     // Interest portion
+      amount: parseFloat(principalPart.toFixed(2)),
+      interest: parseFloat(interestPart.toFixed(2)),
       remainingBalance: parseFloat(Math.max(0, balance).toFixed(2)),
       status: 'pending'
     });
@@ -58,10 +50,17 @@ const generateRepaymentSchedule = (amount, termMonths, annualRateDecimal) => {
 // @access  Private (Borrower)
 const createLoan = asyncHandler(async (req, res) => {
   try {
+    console.log('createLoan called - body:', req.body);
+    console.log('createLoan - req.user:', req.user && { id: req.user._id, role: req.user.role });
+
     if (!req.user) {
       res.status(401);
       throw new Error('Not authorized, no user information');
     }
+
+    // --- START: REMOVED RESTRICTION ---
+    // The check for an existing approved loan has been removed.
+    // --- END: REMOVED RESTRICTION ---
 
     const { amount } = req.body;
     let termMonths = req.body.termMonths ?? req.body.term ?? req.body.duration;
@@ -82,7 +81,6 @@ const createLoan = asyncHandler(async (req, res) => {
       amount,
       termMonths,
       status: 'pending',
-      // interestRate will use the schema default (7) until approved/recalculated
     });
 
     const createdLoan = await loan.save();
@@ -112,6 +110,37 @@ const getAllLoans = asyncHandler(async (req, res) => {
 
   const loans = await Loan.find({ ...status }).populate('borrower', 'username email');
   res.json(loans);
+});
+
+// @desc    Get loan statistics
+// @route   GET /api/loans/stats
+// @access  Private (Admin)
+const getLoanStats = asyncHandler(async (req, res) => {
+  try {
+    const stats = await Loan.aggregate([
+      {
+        $group: {
+          _id: '$status', // Group by status (e.g., 'pending', 'approved')
+          count: { $sum: 1 }, // Count how many loans in each group
+          totalAmount: { $sum: '$amount' } // Sum the amount for each group
+        }
+      }
+    ]);
+    
+    // Format the stats into a simple object for the frontend
+    const formattedStats = stats.reduce((acc, stat) => {
+      // stat._id will be 'approved', 'rejected', etc.
+      acc[stat._id] = {
+        count: stat.count,
+        totalAmount: stat.totalAmount
+      };
+      return acc;
+    }, {});
+
+    res.json(formattedStats);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
 });
 
 // @desc    Get loan by ID
@@ -171,13 +200,11 @@ const updateLoanStatus = asyncHandler(async (req, res) => {
     loan.status = status;
 
     if (status === 'approved') {
-      // Fetch global rate
       const settings = await Settings.getSettings();
       const currentRate = settings.interestRate;
       
       loan.interestRate = currentRate; 
       
-      // Generate Schedule with AMORTIZATION Logic
       loan.repaymentSchedule = generateRepaymentSchedule(
         loan.amount, 
         loan.termMonths ?? loan.term, 
@@ -198,6 +225,7 @@ module.exports = {
   createLoan,
   getMyLoans,
   getAllLoans,
+  getLoanStats, // Keep this export
   getLoanById,
   updateLoanStatus,
 };

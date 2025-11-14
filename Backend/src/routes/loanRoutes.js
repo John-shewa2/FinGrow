@@ -5,6 +5,7 @@ const {
   getAllLoans,
   getLoanById,
   updateLoanStatus,
+  getLoanStats, // <-- 1. IMPORT NEW FUNCTION
 } = require('../controllers/loanController');
 
 const { protect } = require('../middlewares/authMiddleware');
@@ -21,6 +22,9 @@ router
 // --- Borrower Route ---
 router.route('/myloans').get(protect, getMyLoans);
 
+// --- 2. ADD NEW STATS ROUTE ---
+router.route('/stats').get(protect, admin, getLoanStats);
+
 // --- Shared & Admin-Specific ID Routes ---
 router.route('/:id').get(protect, getLoanById);
 
@@ -30,5 +34,3 @@ router.route('/:id/status')
   .patch(protect, admin, updateLoanStatus);
 
 module.exports = router;
-
-

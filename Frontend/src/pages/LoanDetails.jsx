@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react'; 
 import { useParams } from 'react-router-dom';
 import { getLoanById } from '../api/loanApi';
+// import RepaymentForm from '../components/RepaymentForm'; // <-- 1. REMOVE
+import AuthContext from '../context/AuthContext'; 
 
-// Re-using helper functions
+// ... (helpers: formatDate, formatCurrency, getPaymentStatusClasses) ...
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -11,7 +13,6 @@ const formatDate = (dateString) => {
     day: 'numeric',
   });
 };
-
 const formatCurrency = (amount) => {
   if (amount === null || amount === undefined) return 'N/A';
   return `$${amount.toLocaleString('en-US', {
@@ -19,44 +20,49 @@ const formatCurrency = (amount) => {
     maximumFractionDigits: 2,
   })}`;
 };
-
 const getPaymentStatusClasses = (status) => {
-  return status === 'paid'
-    ? 'bg-green-100 text-green-800'
-    : 'bg-yellow-100 text-yellow-800';
+  if (status === 'paid') return 'bg-green-100 text-green-800';
+  if (status === 'partial') return 'bg-yellow-100 text-yellow-800';
+  return 'bg-gray-100 text-gray-800'; // pending
 };
+
 
 const LoanDetails = () => {
   const [loan, setLoan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { id } = useParams(); // Get loan ID from URL
+  const { id } = useParams();
+  
+  // 2. We can simplify the refresh logic now
+  // const [refreshKey, setRefreshKey] = useState(0); 
+  
+  const { user } = useContext(AuthContext); 
+
+  const fetchLoan = async () => {
+    try {
+      setLoading(true);
+      const { data } = await getLoanById(id);
+      setLoan(data);
+      setError(null);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || 'Failed to fetch loan details.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchLoan = async () => {
-      try {
-        setLoading(true);
-        const { data } = await getLoanById(id);
-        setLoan(data);
-        setError(null);
-      } catch (err) {
-        setError(
-          err.response?.data?.message || 'Failed to fetch loan details.'
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) {
       fetchLoan();
     }
-  }, [id]);
+  }, [id]); // 3. Removed refreshKey dependency
 
+  // ... (loading, error, !loan checks) ...
   if (loading) {
     return <div className="text-center p-10">Loading loan details...</div>;
   }
-
   if (error) {
     return (
       <div className="text-center p-10 text-red-600" role="alert">
@@ -64,23 +70,24 @@ const LoanDetails = () => {
       </div>
     );
   }
-
   if (!loan) {
     return <div className="text-center p-10">Loan not found.</div>;
   }
 
-  // --- Calculations for summary figures ---
-
-  // Overdue balance is the sum of all 'pending' (due) installments.
+  // ... (Calculations for overdueBalance, outstandingBalance) ...
+  const now = new Date();
   const overdueBalance = loan.repaymentSchedule
-    .filter((payment) => payment.status === 'pending')
-    .reduce((sum, payment) => sum + payment.installment, 0);
-
-  // Amount paid so far is the sum of principal from 'paid' installments
-  const amountPaid = loan.repaymentSchedule
-    .filter((payment) => payment.status === 'paid')
-    .reduce((sum, payment) => sum + payment.installment, 0);
-  const outstandingBalance = loan.amount - amountPaid;
+    .filter(
+      (p) =>
+        p.status === 'pending' &&
+        new Date(p.dueDate) < now
+    )
+    .reduce((sum, p) => sum + (p.installment - p.amountPaid), 0);
+  const totalPaid = loan.repaymentSchedule.reduce(
+    (sum, p) => sum + p.amountPaid,
+    0
+  );
+  const outstandingBalance = loan.amount - totalPaid;
 
 
   return (
@@ -92,11 +99,22 @@ const LoanDetails = () => {
           </h1>
           <p className="text-gray-600 mt-2">
             Details for loan requested on {formatDate(loan.createdAt)}
-          </p>
+          </p> 
         </div>
+        
+        {/* --- 4. REMOVED THE REPAYMENT FORM --- */}
+        {/*
+        {user && user.role === 'borrower' && (
+          <RepaymentForm 
+            loanId={loan._id} 
+            onPaymentSubmit={() => setRefreshKey(k => k + 1)} 
+          />
+        )}
+        */}
 
         {/* Loan Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {/* ... (All 4 KpiCards remain the same) ... */}
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-sm font-medium text-gray-500">
               Total Amount
@@ -133,6 +151,7 @@ const LoanDetails = () => {
 
         {/* Repayment Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          {/* ... (Table remains exactly the same) ... */}
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -143,31 +162,60 @@ const LoanDetails = () => {
                   Amount Due
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount Paid
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Interest
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Balance
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {loan.repaymentSchedule.map((payment) => (
-                <tr key={payment._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatDate(payment.dueDate)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatCurrency(payment.installment)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span
-                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusClasses(
-                        payment.status
-                      )}`}
-                    >
-                      {payment.status.charAt(0).toUpperCase() +
-                        payment.status.slice(1)}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {loan.repaymentSchedule.map((payment) => {
+                let statusLabel = 'Pending';
+                let statusKey = 'pending';
+                if (payment.status === 'paid') {
+                    statusLabel = 'Paid';
+                    statusKey = 'paid';
+                } else if (payment.amountPaid > 0) {
+                    statusLabel = 'Partial';
+                    statusKey = 'partial';
+                }
+
+                return (
+                  <tr key={payment._id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {formatDate(payment.dueDate)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      {formatCurrency(payment.installment)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {formatCurrency(payment.amountPaid)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {formatCurrency(payment.interest)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {formatCurrency(payment.remainingBalance)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusClasses(
+                          statusKey
+                        )}`}
+                      >
+                        {statusLabel}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

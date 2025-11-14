@@ -8,48 +8,41 @@ import LoanDetails from "../pages/LoanDetails";
 import Navbar from "../components/Navbar";
 import AuthContext from "../context/AuthContext";
 import { ProtectedRoute, AdminRoute } from "./ProtectedRoutes";
-import CalculatorPage from "../pages/CalculatorPage"; // <-- 1. IMPORT IT
+import CalculatorPage from "../pages/CalculatorPage";
+import PaymentApprovalPage from "../pages/PaymentApprovalPage";
+import SettingsPage from "../pages/SettingsPage";
+import SubmitPaymentPage from "../pages/SubmitPaymentPage"; // <-- 1. IMPORT
 
 const AppRoutes = () => {
   const { isAuthenticated, user } = useContext(AuthContext);
 
-  /**
-   * This component handles the root path ('/').
-   * If logged in, it redirects to the correct dashboard based on role.
-   * If not logged in, it redirects to login.
-   */
   const HomeRedirect = () => {
-    if (!isAuthenticated) {
-      return <Navigate to="/login" replace />;
-    }
-    return user?.role === 'admin' ? (
-      <Navigate to="/admin" replace />
-    ) : (
-      <Navigate to="/dashboard" replace />
-    );
+    return <Navigate to="/login" replace />;
   };
 
   return (
     <Router>
-      <Navbar /> {/* Assuming Navbar has logic to show/hide links based on auth */}
+      <Navbar /> 
       <Routes>
         <Route path="/" element={<HomeRedirect />} />
         
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/calculator" element={<CalculatorPage />} /> {/* <-- 2. ADD THE ROUTE */}
+        <Route path="/calculator" element={<CalculatorPage />} /> 
 
         {/* --- Protected Borrower Routes --- */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/loan/:id" element={<LoanDetails />} /> 
-          {/* This will be the "Repayment Schedule" page */}
+          <Route path="/submit-payment" element={<SubmitPaymentPage />} /> {/* <-- 2. ADD ROUTE */}
         </Route>
 
         {/* --- Protected Admin Routes --- */}
         <Route element={<AdminRoute />}>
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/payments" element={<PaymentApprovalPage />} /> 
+          <Route path="/admin/settings" element={<SettingsPage />} /> 
         </Route>
 
         {/* Catch-all route */}
