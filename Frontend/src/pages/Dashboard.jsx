@@ -1,5 +1,6 @@
-import React, { useState, useContext } from 'react';
-import LoanRequestForm from '../components/LoanRequestForm'; 
+import React, { useState, useContext, useEffect } from 'react';
+import LoanRequestForm from '../components/LoanRequestForm';
+import { useLocation } from 'react-router-dom'; 
 import MyLoans from '../components/MyLoans'; 
 import AuthContext from '../context/AuthContext';
 // import { getMyLoans } from '../api/loanApi'; // <-- REMOVED
@@ -7,11 +8,19 @@ import AuthContext from '../context/AuthContext';
 const Dashboard = () => {
   // State to manage which view is active: 'myLoans' or 'requestLoan'
   const [activeView, setActiveView] = useState('myLoans');
-
   const { user } = useContext(AuthContext);
+  const location = useLocation();
 
-  // --- REMOVED: All useEffect, loans, loading, and error states ---
+  const [successMessage, setSuccessMessage] = useState(null)
 
+  useEffect(() => {
+    if (location.state && location.state.message) {
+      setSuccessMessage(location.state.message);
+
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+  
   const firstName =
     user?.name?.split(' ')[0] || user?.username || 'User';
 

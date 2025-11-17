@@ -30,14 +30,14 @@ const Register = () => {
       const registerData = { name: username, email, password };
       const { data } = await registerUser(registerData); // Call the API
 
-      // --- THIS IS THE FIX ---
       // 1. Call context 'register' function to update app state
       register(data);
 
-      // 2. Manually navigate to the dashboard (new users are always borrowers)
-      console.log('Registration successful, navigating...');
-      navigate('/dashboard');
-      // -----------------------
+      // 2. confirmation log and navigate
+      navigate('/dashboard', {
+        state: { message: 'Registration successful! Welcome to FinGrow.' },
+      });
+      
     } catch (err) {
       setError(
         err.response?.data?.message || 'Failed to register. Please try again.'

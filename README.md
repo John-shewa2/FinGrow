@@ -65,9 +65,13 @@ machine:
 -   npm (usually comes with Node.js)
 -   MongoDB (running as a local service)
 
-## 🚀 Getting Started
 
-To run this project, you will need to open **two separate terminal
+## 🚀 Live Demo: 
+visit: 'https://fin-grow-phi.vercel.app/login'
+
+##  Getting Started
+
+To run this project on your local machine, you will need to open **two separate terminal
 windows** (one for the backend and one for the frontend).
 
 ------------------------------------------------------------------------
