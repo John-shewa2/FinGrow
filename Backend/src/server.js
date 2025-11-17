@@ -10,10 +10,16 @@ dotenv.config();
 // initialize express app
 const app = express();
 
+// Get vercel URL for deployment
+const corsOptions = {
+    origin: 'https://fin-grow-phi.vercel.app/',
+    optionsSuccessStatus: 200
+};
+
+
 // middleware setup
 app.use(express.json());
-app.use(cors());
-
+app.use(cors(corsOptions));
 // basic test route
 app.get('/', (req, res) => {
     res.send('API is running...');
