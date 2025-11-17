@@ -12,7 +12,7 @@ const app = express();
 
 // Get vercel URL for deployment
 const corsOptions = {
-    origin: 'https://fin-grow-phi.vercel.app/',
+    origin: process.env.ALLOWED_ORIGIN,
     optionsSuccessStatus: 200
 };
 
