@@ -28,13 +28,12 @@ const SubmitPaymentPage = () => {
       }
     };
     fetchLoans();
-  }, []); // Run once on page load
+  }, []); 
 
   const handleSelectChange = (e) => {
     setSelectedLoanId(e.target.value);
   };
   
-  // This callback is passed to the form
   const handlePaymentSuccess = () => {
      // Reset the form by clearing the selection
      setSelectedLoanId(''); 
@@ -99,7 +98,6 @@ const SubmitPaymentPage = () => {
   );
 };
 
-// Add a simple formatter here for the dropdown
 const formatCurrency = (amount) => {
   if (amount === null || amount === undefined) return '$0.00';
   return `$${amount.toLocaleString('en-US', {

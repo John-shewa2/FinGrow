@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { createLoan } from '../api/loanApi'; // Import our API function
+import { createLoan } from '../api/loanApi'; 
 
 const LoanRequestForm = () => {
   const [amount, setAmount] = useState('');
-  const [term, setTerm] = useState(''); // Term in months
+  const [term, setTerm] = useState(''); 
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);

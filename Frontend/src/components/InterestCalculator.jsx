@@ -13,7 +13,7 @@ const InterestCalculator = () => {
   const [term, setTerm] = useState(12);
   const [monthlyPayment, setMonthlyPayment] = useState(0);
   const [totalRepayment, setTotalRepayment] = useState(0);
-  const [totalInterest, setTotalInterest] = useState(0); // New metric
+  const [totalInterest, setTotalInterest] = useState(0); 
   
   const [annualRate, setAnnualRate] = useState(7);
   const [rateLoading, setRateLoading] = useState(true);

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import AdminLoanList from '../components/AdminLoanList';
-// import SettingsPanel from '../components/SettingsPanel'; // <-- 1. REMOVE
 import KpiDashboard from '../components/KpiDashboard';
 
 const AdminDashboard = () => {
@@ -37,8 +36,6 @@ const AdminDashboard = () => {
         </div>
 
         <KpiDashboard />
-
-        {/* <SettingsPanel /> */} {/* <-- 2. REMOVE */}
 
         {/* View Toggle Buttons */}
         <div className="flex space-x-4 mb-6">

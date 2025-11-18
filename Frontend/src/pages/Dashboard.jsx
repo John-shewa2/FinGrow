@@ -3,7 +3,7 @@ import LoanRequestForm from '../components/LoanRequestForm';
 import { useLocation } from 'react-router-dom'; 
 import MyLoans from '../components/MyLoans'; 
 import AuthContext from '../context/AuthContext';
-// import { getMyLoans } from '../api/loanApi'; // <-- REMOVED
+
 
 const Dashboard = () => {
   // State to manage which view is active: 'myLoans' or 'requestLoan'
@@ -30,7 +30,6 @@ const Dashboard = () => {
       : 'bg-white text-gray-800 hover:bg-gray-100';
   };
 
-  // --- REMOVED: hasApprovedLoan variable ---
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
@@ -56,7 +55,6 @@ const Dashboard = () => {
             My Loans
           </button>
           
-          {/* --- MODIFIED: Button is no longer conditional --- */}
           <button
             onClick={() => setActiveView('requestLoan')}
             className={`px-6 py-3 font-semibold rounded-lg shadow-md transition duration-200 ${getButtonClasses(
@@ -69,7 +67,6 @@ const Dashboard = () => {
 
         {/* Content Area */}
         <div className="bg-white p-6 rounded-lg shadow-md">
-          {/* --- MODIFIED: No longer passing props --- */}
           {activeView === 'myLoans' ? <MyLoans /> : <LoanRequestForm />}
         </div>
       </div>

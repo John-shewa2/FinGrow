@@ -69,8 +69,7 @@ const approvePayment = asyncHandler(async (req, res) => {
   let amountToApply = payment.amount;
 
   // 1. Apply to any existing 'advanceCredit' first
-  //    (This handles a rare case where a user pays *less* than their advance)
-  //    This logic can be simplified, but we'll try to honor "advance"
+  // This handles a rare case where a user pays *less* than their advance
   if (loan.advanceCredit < 0) {
       const creditToClear = Math.min(amountToApply, Math.abs(loan.advanceCredit));
       loan.advanceCredit += creditToClear;
@@ -104,7 +103,6 @@ const approvePayment = asyncHandler(async (req, res) => {
   // 4. Mark payment as approved
   payment.status = 'approved';
   payment.reviewedAt = Date.now();
-  // payment.reviewedBy = req.user._id; // <-- Uncomment if you add this field
 
   await loan.save();
   await payment.save();

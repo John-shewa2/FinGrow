@@ -11,15 +11,14 @@ export default function Loans() {
   const [interestRate, setInterestRate] = useState(7);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [showLoans, setShowLoans] = useState(false); // hide until "My Loans" clicked
+  const [showLoans, setShowLoans] = useState(false); 
 
   const fetchLoans = async () => {
     try {
       const res = await api.get("/loans", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("GET /loans response:", res.data); // <-- debug to inspect payload/shape
-      // Filter loans by borrower if user is not admin (robust id handling)
+      console.log("GET /loans response:", res.data); 
       if (user.role === "admin") {
         setLoans(res.data);
       } else {
@@ -39,7 +38,6 @@ export default function Loans() {
   useEffect(() => {
     if (token) fetchLoans();
   }, [token]);
-  // helper to show loans and refresh
   const handleShowLoans = async () => {
     setShowLoans(true);
     await fetchLoans();

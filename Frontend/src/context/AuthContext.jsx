@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // This is the LOGIN function your app will use
+  
   const login = (data) => {
     // data should be { token, user } from the backend
     const authData = { token: data.token, user: data.user };
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('auth', JSON.stringify(authData));
   };
 
-  // This is the REGISTER function your app will use
+  // This is the REGISTER function 
   const register = (data) => {
     const authData = { token: data.token, user: data.user };
     setAuth(authData);

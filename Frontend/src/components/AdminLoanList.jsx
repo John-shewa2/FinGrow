@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getAllLoans, updateLoanStatus } from '../api/loanApi'; // updateLoanStatus is now simpler
+import { getAllLoans, updateLoanStatus } from '../api/loanApi'; 
 import { Link } from 'react-router-dom';
 
-// ... (formatDate and formatCurrency helpers remain the same) ...
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -26,7 +25,6 @@ const AdminLoanList = ({ status }) => {
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
   
-  // *** MODIFIED: Removed the 'rates' state ***
 
   // Function to fetch loans based on the status prop
   const fetchLoans = async () => {
@@ -34,7 +32,6 @@ const AdminLoanList = ({ status }) => {
       setLoading(true);
       const { data } = await getAllLoans(status);
       setLoans(data);
-      // *** MODIFIED: Removed rates population logic ***
       setError(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch loans.');
@@ -47,9 +44,6 @@ const AdminLoanList = ({ status }) => {
     fetchLoans();
   }, [status]); 
 
-  // *** MODIFIED: Removed handleRateChange function ***
-
-  // *** MODIFIED: Simplified to only send status ***
   const handleUpdateStatus = async (id, newStatus) => {
     setActionLoading(id);
     try {
@@ -63,7 +57,6 @@ const AdminLoanList = ({ status }) => {
     }
   };
 
-  // ... (loading, error, no loans render logic is the same) ...
   if (loading) {
     return <div className="text-center p-8">Loading loans...</div>;
   }
@@ -97,11 +90,9 @@ const AdminLoanList = ({ status }) => {
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Term
             </th>
-            {/* *** MODIFIED: Removed Rate column header *** */}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Requested On
             </th>
-            {/* *** MODIFIED: Added Interest Rate column for approved/rejected loans *** */}
             {status !== 'pending' && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Rate (%)
@@ -127,11 +118,9 @@ const AdminLoanList = ({ status }) => {
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 {loan.term} months
               </td>
-              {/* *** MODIFIED: Removed rate input cell *** */}
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 {formatDate(loan.createdAt)}
               </td>
-              {/* *** MODIFIED: Show the rate for non-pending loans *** */}
               {status !== 'pending' && (
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                   {loan.interestRate}%

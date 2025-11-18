@@ -11,7 +11,7 @@ import { ProtectedRoute, AdminRoute } from "./ProtectedRoutes";
 import CalculatorPage from "../pages/CalculatorPage";
 import PaymentApprovalPage from "../pages/PaymentApprovalPage";
 import SettingsPage from "../pages/SettingsPage";
-import SubmitPaymentPage from "../pages/SubmitPaymentPage"; // <-- 1. IMPORT
+import SubmitPaymentPage from "../pages/SubmitPaymentPage"; 
 
 const AppRoutes = () => {
   const { isAuthenticated, user } = useContext(AuthContext);

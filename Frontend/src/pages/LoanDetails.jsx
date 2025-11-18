@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react'; 
 import { useParams } from 'react-router-dom';
 import { getLoanById } from '../api/loanApi';
-// import RepaymentForm from '../components/RepaymentForm'; // <-- 1. REMOVE
 import AuthContext from '../context/AuthContext'; 
 
-// ... (helpers: formatDate, formatCurrency, getPaymentStatusClasses) ...
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -23,7 +21,7 @@ const formatCurrency = (amount) => {
 const getPaymentStatusClasses = (status) => {
   if (status === 'paid') return 'bg-green-100 text-green-800';
   if (status === 'partial') return 'bg-yellow-100 text-yellow-800';
-  return 'bg-gray-100 text-gray-800'; // pending
+  return 'bg-gray-100 text-gray-800'; 
 };
 
 
@@ -32,9 +30,6 @@ const LoanDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { id } = useParams();
-  
-  // 2. We can simplify the refresh logic now
-  // const [refreshKey, setRefreshKey] = useState(0); 
   
   const { user } = useContext(AuthContext); 
 
@@ -57,9 +52,8 @@ const LoanDetails = () => {
     if (id) {
       fetchLoan();
     }
-  }, [id]); // 3. Removed refreshKey dependency
+  }, [id]); 
 
-  // ... (loading, error, !loan checks) ...
   if (loading) {
     return <div className="text-center p-10">Loading loan details...</div>;
   }
@@ -74,7 +68,6 @@ const LoanDetails = () => {
     return <div className="text-center p-10">Loan not found.</div>;
   }
 
-  // ... (Calculations for overdueBalance, outstandingBalance) ...
   const now = new Date();
   const overdueBalance = loan.repaymentSchedule
     .filter(
@@ -102,19 +95,9 @@ const LoanDetails = () => {
           </p> 
         </div>
         
-        {/* --- 4. REMOVED THE REPAYMENT FORM --- */}
-        {/*
-        {user && user.role === 'borrower' && (
-          <RepaymentForm 
-            loanId={loan._id} 
-            onPaymentSubmit={() => setRefreshKey(k => k + 1)} 
-          />
-        )}
-        */}
-
+        
         {/* Loan Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {/* ... (All 4 KpiCards remain the same) ... */}
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-sm font-medium text-gray-500">
               Total Amount
@@ -151,7 +134,6 @@ const LoanDetails = () => {
 
         {/* Repayment Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {/* ... (Table remains exactly the same) ... */}
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

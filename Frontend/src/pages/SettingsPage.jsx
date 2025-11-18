@@ -1,5 +1,5 @@
 import React from 'react';
-import SettingsPanel from '../components/SettingsPanel'; // We will use the component you created
+import SettingsPanel from '../components/SettingsPanel'; 
 
 const SettingsPage = () => {
   return (

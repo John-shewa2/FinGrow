@@ -16,8 +16,6 @@ const paymentSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    // In a real app, this would be a file path from an S3/Cloudinary upload.
-    // For simplicity, we'll store it as a string (URL or simple name).
     receipt: {
       type: String,
       required: true,
@@ -34,8 +32,6 @@ const paymentSchema = new mongoose.Schema(
     reviewedAt: {
       type: Date,
     },
-    // Optional: Add a field for admin who reviewed it
-    // reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   },
   { timestamps: true }
 );

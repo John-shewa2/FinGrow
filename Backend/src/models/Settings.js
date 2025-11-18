@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const settingsSchema = new mongoose.Schema({
-  // Using a 'key' allows you to add more settings later (e.g., 'maxLoanAmount')
   key: {
     type: String,
     required: true,

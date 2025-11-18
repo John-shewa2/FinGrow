@@ -3,7 +3,7 @@ import { submitPayment } from '../api/paymentApi';
 
 const RepaymentForm = ({ loanId, onPaymentSubmit }) => {
   const [amount, setAmount] = useState('');
-  const [receipt, setReceipt] = useState(''); // Will be a simple text input
+  const [receipt, setReceipt] = useState(''); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -20,7 +20,6 @@ const RepaymentForm = ({ loanId, onPaymentSubmit }) => {
       setAmount('');
       setReceipt('');
       
-      // Tell the parent page to handle the success (e.g., reset dropdown)
       if (onPaymentSubmit) {
         onPaymentSubmit();
       }
@@ -32,7 +31,6 @@ const RepaymentForm = ({ loanId, onPaymentSubmit }) => {
   };
 
   return (
-    // Removed outer wrapper and <h2> title
     <>
       {error && <p className="text-red-600 mb-3">{error}</p>}
       {success && <p className="text-green-600 mb-3">{success}</p>}

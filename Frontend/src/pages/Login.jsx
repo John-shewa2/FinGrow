@@ -12,7 +12,7 @@ const Login = () => {
   const { login, isAuthenticated, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // --- NEW: Redirect if already logged in ---
+  // Redirect if already logged in 
   // This prevents a logged-in user from seeing the login page
   useEffect(() => {
     if (isAuthenticated) {
@@ -28,13 +28,10 @@ const Login = () => {
 
     try {
       const loginData = { email, password };
-      const { data } = await loginUser(loginData); // Call the API
+      const { data } = await loginUser(loginData); 
 
-      // --- THIS IS THE FIX ---
-      // 1. Call the context 'login' function to update the app state
       login(data);
 
-      // 2. Manually navigate to the correct dashboard
       console.log('Login successful, navigating...');
       navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
       // -----------------------
@@ -42,7 +39,6 @@ const Login = () => {
       setError(err.response?.data?.message || 'Invalid email or password');
       setLoading(false);
     }
-    // No finally { setLoading(false) } here, because we navigate away on success
   };
 
   return (

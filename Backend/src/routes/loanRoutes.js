@@ -5,7 +5,7 @@ const {
   getAllLoans,
   getLoanById,
   updateLoanStatus,
-  getLoanStats, // <-- 1. IMPORT NEW FUNCTION
+  getLoanStats, 
 } = require('../controllers/loanController');
 
 const { protect } = require('../middlewares/authMiddleware');
@@ -13,7 +13,6 @@ const admin = require('../middlewares/roleMiddleware');
 
 const router = express.Router();
 
-// --- Combined '/' Routes ---
 router
   .route('/')
   .post(protect, createLoan)
@@ -22,7 +21,7 @@ router
 // --- Borrower Route ---
 router.route('/myloans').get(protect, getMyLoans);
 
-// --- 2. ADD NEW STATS ROUTE ---
+// --- NEW STATS ROUTE ---
 router.route('/stats').get(protect, admin, getLoanStats);
 
 // --- Shared & Admin-Specific ID Routes ---

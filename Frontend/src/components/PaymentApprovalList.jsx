@@ -26,7 +26,7 @@ const PaymentApprovalList = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [actionLoading, setActionLoading] = useState(null); // Tracks button loading
+  const [actionLoading, setActionLoading] = useState(null); 
 
   const fetchPayments = async () => {
     try {
@@ -57,7 +57,6 @@ const PaymentApprovalList = () => {
       fetchPayments();
     } catch (err) {
       console.error('Failed to process payment:', err);
-      // You could set a per-item error
     } finally {
       setActionLoading(null);
     }
@@ -119,7 +118,7 @@ const PaymentApprovalList = () => {
                 {formatDate(payment.submittedAt)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                {/* Basic link for receipt URL. In a real app, make this safer. */}
+                {/* Basic link for receipt URL. */}
                 <a
                   href={payment.receipt.startsWith('http') ? payment.receipt : undefined}
                   target="_blank"

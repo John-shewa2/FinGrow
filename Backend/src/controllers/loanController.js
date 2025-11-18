@@ -3,7 +3,7 @@ const User = require('../models/user');
 const Settings = require('../models/Settings');
 const asyncHandler = require('express-async-handler');
 
-// Helper: Standard Amortization Schedule
+// Standard Amortization Schedule
 const generateRepaymentSchedule = (amount, termMonths, annualRateDecimal) => {
   const schedule = [];
   let balance = amount;
@@ -57,10 +57,6 @@ const createLoan = asyncHandler(async (req, res) => {
       res.status(401);
       throw new Error('Not authorized, no user information');
     }
-
-    // --- START: REMOVED RESTRICTION ---
-    // The check for an existing approved loan has been removed.
-    // --- END: REMOVED RESTRICTION ---
 
     const { amount } = req.body;
     let termMonths = req.body.termMonths ?? req.body.term ?? req.body.duration;
@@ -129,7 +125,7 @@ const getLoanStats = asyncHandler(async (req, res) => {
     
     // Format the stats into a simple object for the frontend
     const formattedStats = stats.reduce((acc, stat) => {
-      // stat._id will be 'approved', 'rejected', etc.
+      
       acc[stat._id] = {
         count: stat.count,
         totalAmount: stat.totalAmount
@@ -225,7 +221,7 @@ module.exports = {
   createLoan,
   getMyLoans,
   getAllLoans,
-  getLoanStats, // Keep this export
+  getLoanStats, 
   getLoanById,
   updateLoanStatus,
 };

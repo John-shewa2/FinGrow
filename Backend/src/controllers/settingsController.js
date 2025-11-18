@@ -2,11 +2,7 @@ const Settings = require('../models/Settings');
 const Loan = require('../models/Loan');
 const asyncHandler = require('express-async-handler');
 
-/**
- * Recalculates all pending installments for active loans.
- * This is a "flat rate" recalculation based on original principal.
- * @param {number} newRate - The new interest rate (e.g., 7 for 7%)
- */
+// Recalculate interest and revise monthly payment amount
 const recalculateActiveLoans = async (newRate) => {
   const newRateDecimal = newRate / 100;
 
@@ -40,7 +36,6 @@ const recalculateActiveLoans = async (newRate) => {
     console.log(`Recalculated ${activeLoans.length} active loans.`);
   } catch (error) {
     console.error('Error during loan recalculation:', error);
-    // This should ideally have more robust error handling
   }
 };
 
@@ -67,8 +62,6 @@ const updateInterestRate = asyncHandler(async (req, res) => {
   settings.interestRate = Number(interestRate);
   await settings.save();
 
-  // *** TRIGGER RECALCULATION ***
-  // This runs in the background. We don't wait for it.
   recalculateActiveLoans(settings.interestRate);
 
   res.json({

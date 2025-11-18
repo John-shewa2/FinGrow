@@ -10,10 +10,9 @@ const formatCurrency = (amount) => {
   })}`;
 };
 
-// --- MODIFICATION 1: KpiCard is updated to accept colors ---
 // A reusable card component
 const KpiCard = ({ title, value, subtext, color = 'gray' }) => {
-  // Define professional color themes
+  // Define color themes
   const themes = {
     gray: {
       bg: 'bg-gray-50',
@@ -61,7 +60,6 @@ const KpiCard = ({ title, value, subtext, color = 'gray' }) => {
     </div>
   );
 };
-// --- END OF MODIFICATION 1 ---
 
 const KpiDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -117,46 +115,45 @@ const KpiDashboard = () => {
     : 'N/A';
 
   return (
-    // --- MODIFICATION 2: Pass the color prop to each card ---
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
       <KpiCard 
         title="Total Applications" 
         value={totalApplications}
         subtext={`${pending.count} pending review`} 
-        color="blue" // <-- Added color
+        color="blue" 
       />
       <KpiCard 
         title="Approval Rate" 
         value={approvalRate}
         subtext={`${totalDecided} decisions made`} 
-        color="yellow" // <-- Added color
+        color="yellow" 
       />
       <KpiCard 
         title="Total Value Approved" 
         value={formatCurrency(approved.totalAmount)}
         subtext={`${approved.count} loans`} 
-        color="green" // <-- Added color
+        color="green" 
       />
       <KpiCard 
         title="Total Value Rejected" 
         value={formatCurrency(rejected.totalAmount)}
         subtext={`${rejected.count} loans`} 
-        color="red" // <-- Added color
+        color="red" 
       />
       <KpiCard 
         title="Total Value Pending" 
         value={formatCurrency(pending.totalAmount)}
         subtext={`${pending.count} loans`}
-        color="gray" // <-- Added color
+        color="gray" 
       />
       <KpiCard 
         title="Avg. Approved Loan" 
         value={approved.count > 0 ? formatCurrency(approved.totalAmount / approved.count) : '$0.00'}
         subtext="Average value"
-        color="green" // <-- Added color
+        color="green" 
       />
     </div>
-    // --- END OF MODIFICATION 2 ---
+
   );
 };
 

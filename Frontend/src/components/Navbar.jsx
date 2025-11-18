@@ -56,7 +56,6 @@ const Navbar = () => {
                     >
                       My Dashboard
                     </Link>
-                    {/* --- ADDED THIS LINK --- */}
                     <Link
                       to="/submit-payment"
                       className="text-white hover:text-gray-100 font-medium transition duration-150"
@@ -104,7 +103,6 @@ const Navbar = () => {
               </>
             )}
           </div>
-          {/* ... mobile menu ... */}
         </div>
       </div>
     </nav>

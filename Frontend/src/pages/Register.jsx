@@ -13,7 +13,7 @@ const Register = () => {
   const { register, isAuthenticated, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // --- NEW: Redirect if already logged in ---
+  // Redirect if already logged in 
   useEffect(() => {
     if (isAuthenticated) {
       navigate(user.role === 'admin' ? '/admin' : '/dashboard');
@@ -28,12 +28,12 @@ const Register = () => {
 
     try {
       const registerData = { name: username, email, password };
-      const { data } = await registerUser(registerData); // Call the API
+      const { data } = await registerUser(registerData); 
 
-      // 1. Call context 'register' function to update app state
+      // Call context 'register' function to update app state
       register(data);
 
-      // 2. confirmation log and navigate
+      // confirmation log and navigate
       navigate('/dashboard', {
         state: { message: 'Registration successful! Welcome to FinGrow.' },
       });

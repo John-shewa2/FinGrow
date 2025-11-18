@@ -25,7 +25,7 @@ export const AdminRoute = () => {
   const { isAuthenticated, user, loading } = useContext(AuthContext);
 
   if (loading) {
-    return <div>Loading...</div>; // Or a spinner component
+    return <div>Loading...</div>; 
   }
 
   if (!isAuthenticated) {

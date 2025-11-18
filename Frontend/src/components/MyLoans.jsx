@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'; // <-- 1. ADDED useState, useEffect
-import { getMyLoans } from '../api/loanApi'; // <-- 2. ADDED import
+import React, { useState, useEffect } from 'react'; 
+import { getMyLoans } from '../api/loanApi'; 
 import { Link } from 'react-router-dom';
 
 // Helper function to format dates
@@ -37,9 +37,8 @@ const getStatusClasses = (status) => {
   }
 };
 
-// 3. Changed signature to no longer accept props
+
 const MyLoans = () => {
-  // 4. ADDED back state and data fetching
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -107,7 +106,7 @@ const MyLoans = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {loans.map((loan) => {
-              // --- Calculation Logic (from previous fix) ---
+              // --- Calculation Logic ---
               let outstandingBalance = 0;
               let nextPaymentDate = null;
 

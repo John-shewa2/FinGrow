@@ -38,7 +38,6 @@ const repaymentSchema = new mongoose.Schema(
 
 const loanSchema = new mongoose.Schema(
     {
-        // ... (all other fields remain the same) ...
         borrower: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
@@ -70,7 +69,6 @@ const loanSchema = new mongoose.Schema(
             default: 0
         },
         
-        // ... (other fields) ...
         totalInterest: { type: Number },
         totalRepayable: { type: Number },
         NextDueDate: { type: Date },
